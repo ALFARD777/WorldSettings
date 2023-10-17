@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="WorldSettings:jar">
+    <output-path>$USER_HOME$/Desktop/plugin</output-path>
+    <root id="archive" name="WorldSettings.jar">
+      <element id="module-output" name="WorldSettings" />
+    </root>
+  </artifact>
+</component>
