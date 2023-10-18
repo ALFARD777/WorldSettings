@@ -146,6 +146,7 @@ public class SettingsCommand implements CommandExecutor, Listener {
                 event.setCancelled(true);
                 showMainInventory(player);
             }
+
             if (event.getCurrentItem() != null && event.getCurrentItem().isSimilar(backToScoreboardEditorMenuArrow)) {
                 event.setCancelled(true);
                 showScoreBoardEditorMenu(player);
@@ -187,6 +188,11 @@ public class SettingsCommand implements CommandExecutor, Listener {
                 scoreboardContent.add(WHITE + "RealmName");
                 updateScoreboard(player);
                 player.sendMessage(GREEN + "Название сервера успешно добавлено!");
+            }
+
+            if (event.getCurrentItem() != null && event.getCurrentItem().isSimilar(eventEditorItem)) {
+                event.setCancelled(true);
+                showEventEditorMenu(player);
             }
         }
     }
