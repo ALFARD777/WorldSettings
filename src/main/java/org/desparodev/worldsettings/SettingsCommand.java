@@ -78,9 +78,24 @@ public class SettingsCommand implements CommandExecutor, Listener {
     public void showEventEditorMenu(Player player) {
         Inventory eventEditorMenu = player.getServer().createInventory(null, 54, "Настройки событий");
         eventEditorMenu.setItem(49, backToMainMenuArrow);
-        eventPlayerJoin = createItem(Material.OAK_DOOR, GREEN + "Подключение игрока", GRAY + "Происходит, когда игрок заходит на сервер");
+        ItemStack eventPlayerJoin = createItem(Material.OAK_DOOR, GREEN + "Подключение игрока", GRAY + "Происходит, когда игрок заходит на сервер");
+        ItemStack eventPlayerQuit = createItem(Material.RED_BED, GREEN + "Выход игрока", GRAY + "Происходит, когда игрок выходит с сервера");
+        ItemStack eventPlayerDeath = createItem(Material.DIAMOND_SWORD, GREEN + "Смерть игрока", GRAY + "Происходит, когда игрок умирает");
+        ItemStack eventPlayerKill = createItem(Material.REDSTONE, GREEN + "Убийство игрока", GRAY + "Происходит, когда игрок убивает другого игрока");
+        ItemStack eventPlayerRespawn = createItem(Material.GOLDEN_APPLE, GREEN + "Возрождение игрока", GRAY + "Происходит, когда игрок возрождается после смерти");
+        ItemStack eventFishCaught = createItem(Material.FISHING_ROD, GREEN + "Пойманная рыба", GRAY + "Происходит, когда игрок ловит рыбу");
+        ItemStack eventPlayerEnterPortal = createItem(Material.NETHER_PORTAL, GREEN + "Вход в портал", GRAY + "Происходит, когда игрок входит в портал");
+        ItemStack eventPlayerDamage = createItem(Material.DIAMOND_CHESTPLATE, GREEN + "Полученный урон", GRAY + "Происходит, когда игрок получает урон");
+        ItemStack eventBlockBreak = createItem(Material.DIAMOND_PICKAXE, GREEN + "Разрушение блока", GRAY + "Происходит, когда игрок разрушает блок");
         eventEditorMenu.setItem(10, eventPlayerJoin);
-
+        eventEditorMenu.setItem(11, eventPlayerQuit);
+        eventEditorMenu.setItem(12, eventPlayerDeath);
+        eventEditorMenu.setItem(13, eventPlayerKill);
+        eventEditorMenu.setItem(14, eventPlayerRespawn);
+        eventEditorMenu.setItem(15, eventFishCaught);
+        eventEditorMenu.setItem(16, eventPlayerEnterPortal);
+        eventEditorMenu.setItem(19, eventPlayerDamage);
+        eventEditorMenu.setItem(20, eventBlockBreak);
         player.openInventory(eventEditorMenu);
     }
 
