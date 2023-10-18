@@ -25,6 +25,7 @@ import static org.bukkit.ChatColor.*;
 
 public class SettingsCommand implements CommandExecutor, Listener {
     List<String> scoreboardContent = new ArrayList<>();
+    private ItemStack infoBook = new ItemStack(Material.BOOK);
     private final ItemStack scoreboardEditorItem;
     private final ItemStack eventEditorItem;
     private final ItemStack backToMainMenuArrow;
@@ -34,7 +35,7 @@ public class SettingsCommand implements CommandExecutor, Listener {
     private ItemStack blankLineItem = new ItemStack(Material.PAPER);
     private ItemStack customLineItem = new ItemStack(Material.MAP);
     private ItemStack realmNameLineItem = new ItemStack(Material.OAK_SIGN);
-    private ItemStack infoBook = new ItemStack(Material.BOOK);
+    private ItemStack eventPlayerJoin = new ItemStack(Material.OAK_DOOR);
 
     SettingsCommand() {
         this.scoreboardEditorItem = createItem(Material.FILLED_MAP, GREEN + "Редактировать Scoreboard", GRAY + "Редактирование текста в панели справа");
@@ -60,9 +61,9 @@ public class SettingsCommand implements CommandExecutor, Listener {
 
     public void showScoreBoardEditorMenu(Player player) {
         Inventory scoreboardEditorMenu = player.getServer().createInventory(null, 54, "Настройки Scoreboard");
+        scoreboardEditorMenu.setItem(49, backToMainMenuArrow);
         scoreBoardEditorToDefault = createItem(Material.TNT, RED + "Очистить Scoreboard", GRAY + "Очищает весь Scoreboard");
         scoreboardEditorMenu.setItem(48, scoreBoardEditorToDefault);
-        scoreboardEditorMenu.setItem(49, backToMainMenuArrow);
         addScoreboardItem = createItem(Material.PAPER, GREEN + "Добавить строку", GRAY + "Добавляет строку к Scoreboard");
         scoreboardEditorMenu.setItem(50, addScoreboardItem);
         List<String> bookLore = new ArrayList<>();
@@ -72,6 +73,15 @@ public class SettingsCommand implements CommandExecutor, Listener {
         infoBook = createItem(Material.BOOK, YELLOW + "Настройки Scoreboard", bookLore);
         scoreboardEditorMenu.setItem(53, infoBook);
         player.openInventory(scoreboardEditorMenu);
+    }
+
+    public void showEventEditorMenu(Player player) {
+        Inventory eventEditorMenu = player.getServer().createInventory(null, 54, "Настройки событий");
+        eventEditorMenu.setItem(49, backToMainMenuArrow);
+        eventPlayerJoin = createItem(Material.OAK_DOOR, GREEN + "Подключение игрока", GRAY + "Происходит, когда игрок заходит на сервер");
+        eventEditorMenu.setItem(10, eventPlayerJoin);
+
+        player.openInventory(eventEditorMenu);
     }
 
     @NotNull
@@ -105,6 +115,9 @@ public class SettingsCommand implements CommandExecutor, Listener {
     public void onInventoryClick(InventoryClickEvent event) {
         if (event.getClickedInventory() != null) {
             Player player = (Player) event.getWhoClicked();
+            if (event.getCurrentItem() != null && event.getCurrentItem().isSimilar(infoBook)) {
+                event.setCancelled(true);
+            }
             if (event.getCurrentItem() != null && event.getCurrentItem().isSimilar(backToMainMenuArrow)) {
                 event.setCancelled(true);
                 showMainInventory(player);
@@ -117,40 +130,19 @@ public class SettingsCommand implements CommandExecutor, Listener {
                 event.setCancelled(true);
                 showScoreBoardEditorMenu(player);
             }
-            if (event.getCurrentItem() != null && event.getCurrentItem().isSimilar(scoreboardEditorItem)) {
-                event.setCancelled(true);
-            }
-            if (event.getCurrentItem() != null && event.getCurrentItem().isSimilar(infoBook)) {
-                event.setCancelled(true);
-            }
             if (event.getCurrentItem() != null && event.getCurrentItem().isSimilar(scoreBoardEditorToDefault)) {
                 event.setCancelled(true);
             }
             if (event.getCurrentItem() != null && event.getCurrentItem().isSimilar(addScoreboardItem)) {
                 event.setCancelled(true);
                 Inventory addScoreboardLineMenu = player.getServer().createInventory(null, 54, "Добавить линию");
-                List<String> blankLineItemLore = new ArrayList<>();
-                blankLineItemLore.add(DARK_GRAY + "1 строка");
-                blankLineItemLore.add(" ");
-                blankLineItemLore.add(GRAY + "Просто пустая строка");
-                blankLineItemLore.add(" ");
-                blankLineItem = createItem(Material.PAPER, GREEN + "Пустая строка", blankLineItemLore);
+
+                blankLineItem = createItem(Material.PAPER, GREEN + "Пустая строка", getBlankLineItemLore());
                 addScoreboardLineMenu.setItem(10, blankLineItem);
-                List<String> customLineItemLore = new ArrayList<>();
-                customLineItemLore.add(DARK_GRAY + "1 строка");
-                customLineItemLore.add(" ");
-                customLineItemLore.add(GRAY + "Настраиваемая строка");
-                customLineItemLore.add(" ");
-                customLineItemLore.add(GRAY + "Пример:");
-                customLineItemLore.add(WHITE + "Привет, мир!");
-                customLineItemLore.add(" ");
-                customLineItem = createItem(Material.MAP, GREEN + "Произвольная строка", customLineItemLore);
+                customLineItem = createItem(Material.MAP, GREEN + "Произвольная строка", getCustomLineItemLore());
                 addScoreboardLineMenu.setItem(11, customLineItem);
-                List<String> realmNameLineItemLore = getRealmNameLineItemLore();
-                realmNameLineItem = createItem(Material.OAK_SIGN, GREEN + "Название реалма", realmNameLineItemLore);
+                realmNameLineItem = createItem(Material.OAK_SIGN, GREEN + "Название реалма", getRealmNameLineItemLore());
                 addScoreboardLineMenu.setItem(12, realmNameLineItem);
-
-
                 addScoreboardLineMenu.setItem(49, backToScoreboardEditorMenuArrow);
                 player.openInventory(addScoreboardLineMenu);
             }
@@ -176,16 +168,38 @@ public class SettingsCommand implements CommandExecutor, Listener {
     }
 
     @NotNull
+    private static List<String> getBlankLineItemLore() {
+        List<String> list = new ArrayList<>();
+        list.add(DARK_GRAY + "1 строка");
+        list.add(" ");
+        list.add(GRAY + "Просто пустая строка");
+        list.add(" ");
+        return list;
+    }
+    @NotNull
+    private static List<String> getCustomLineItemLore() {
+        List<String> list = new ArrayList<>();
+        list.add(DARK_GRAY + "1 строка");
+        list.add(" ");
+        list.add(GRAY + "Настраиваемая строка");
+        list.add(" ");
+        list.add(GRAY + "Пример:");
+        list.add(WHITE + "Привет, мир!");
+        list.add(" ");
+        return list;
+    }
+
+    @NotNull
     private static List<String> getRealmNameLineItemLore() {
-        List<String> realmNameLineItemLore = new ArrayList<>();
-        realmNameLineItemLore.add(DARK_GRAY + "1 строка");
-        realmNameLineItemLore.add(" ");
-        realmNameLineItemLore.add(GRAY + "Отображает имя вашего реалма");
-        realmNameLineItemLore.add(" ");
-        realmNameLineItemLore.add(GRAY + "Пример:");
-        realmNameLineItemLore.add(WHITE + "Server");
-        realmNameLineItemLore.add(" ");
-        return realmNameLineItemLore;
+        List<String> list = new ArrayList<>();
+        list.add(DARK_GRAY + "1 строка");
+        list.add(" ");
+        list.add(GRAY + "Отображает имя вашего реалма");
+        list.add(" ");
+        list.add(GRAY + "Пример:");
+        list.add(WHITE + "Server");
+        list.add(" ");
+        return list;
     }
 
     @EventHandler
