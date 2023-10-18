@@ -36,6 +36,15 @@ public class SettingsCommand implements CommandExecutor, Listener {
     private ItemStack customLineItem = new ItemStack(Material.MAP);
     private ItemStack realmNameLineItem = new ItemStack(Material.OAK_SIGN);
     private ItemStack eventPlayerJoin = new ItemStack(Material.OAK_DOOR);
+    private ItemStack eventPlayerQuit = new ItemStack(Material.BED);
+    private ItemStack eventPlayerDeath = new ItemStack(Material.DIAMOND_SWORD);
+    private ItemStack eventPlayerKill = new ItemStack(Material.REDSTONE);
+    private ItemStack eventPlayerRespawn = new ItemStack(Material.GOLDEN_APPLE);
+    private ItemStack eventFishCaught = new ItemStack(Material.FISHING_ROD);
+    private ItemStack eventPlayerEnterPortal = new ItemStack(Material.NETHER_PORTAL);
+    private ItemStack eventPlayerDamage = new ItemStack(Material.DIAMOND_CHESTPLATE);
+    private ItemStack eventBlockBreak = new ItemStack(Material.DIAMOND_PICKAXE);
+
 
     SettingsCommand() {
         this.scoreboardEditorItem = createItem(Material.FILLED_MAP, GREEN + "Редактировать Scoreboard", GRAY + "Редактирование текста в панели справа");
@@ -78,15 +87,15 @@ public class SettingsCommand implements CommandExecutor, Listener {
     public void showEventEditorMenu(Player player) {
         Inventory eventEditorMenu = player.getServer().createInventory(null, 54, "Настройки событий");
         eventEditorMenu.setItem(49, backToMainMenuArrow);
-        ItemStack eventPlayerJoin = createItem(Material.OAK_DOOR, GREEN + "Подключение игрока", GRAY + "Происходит, когда игрок заходит на сервер");
-        ItemStack eventPlayerQuit = createItem(Material.RED_BED, GREEN + "Выход игрока", GRAY + "Происходит, когда игрок выходит с сервера");
-        ItemStack eventPlayerDeath = createItem(Material.DIAMOND_SWORD, GREEN + "Смерть игрока", GRAY + "Происходит, когда игрок умирает");
-        ItemStack eventPlayerKill = createItem(Material.REDSTONE, GREEN + "Убийство игрока", GRAY + "Происходит, когда игрок убивает другого игрока");
-        ItemStack eventPlayerRespawn = createItem(Material.GOLDEN_APPLE, GREEN + "Возрождение игрока", GRAY + "Происходит, когда игрок возрождается после смерти");
-        ItemStack eventFishCaught = createItem(Material.FISHING_ROD, GREEN + "Пойманная рыба", GRAY + "Происходит, когда игрок ловит рыбу");
-        ItemStack eventPlayerEnterPortal = createItem(Material.NETHER_PORTAL, GREEN + "Вход в портал", GRAY + "Происходит, когда игрок входит в портал");
-        ItemStack eventPlayerDamage = createItem(Material.DIAMOND_CHESTPLATE, GREEN + "Полученный урон", GRAY + "Происходит, когда игрок получает урон");
-        ItemStack eventBlockBreak = createItem(Material.DIAMOND_PICKAXE, GREEN + "Разрушение блока", GRAY + "Происходит, когда игрок разрушает блок");
+        eventPlayerJoin = createItem(Material.OAK_DOOR, GREEN + "Подключение игрока", GRAY + "Происходит, когда игрок заходит на сервер");
+        eventPlayerQuit = createItem(Material.RED_BED, GREEN + "Выход игрока", GRAY + "Происходит, когда игрок выходит с сервера");
+        eventPlayerDeath = createItem(Material.DIAMOND_SWORD, GREEN + "Смерть игрока", GRAY + "Происходит, когда игрок умирает");
+        eventPlayerKill = createItem(Material.REDSTONE, GREEN + "Убийство игрока", GRAY + "Происходит, когда игрок убивает другого игрока");
+        eventPlayerRespawn = createItem(Material.GOLDEN_APPLE, GREEN + "Возрождение игрока", GRAY + "Происходит, когда игрок возрождается после смерти");
+        eventFishCaught = createItem(Material.FISHING_ROD, GREEN + "Пойманная рыба", GRAY + "Происходит, когда игрок ловит рыбу");
+        eventPlayerEnterPortal = createItem(Material.NETHER_PORTAL, GREEN + "Вход в портал", GRAY + "Происходит, когда игрок входит в портал");
+        eventPlayerDamage = createItem(Material.DIAMOND_CHESTPLATE, GREEN + "Полученный урон", GRAY + "Происходит, когда игрок получает урон");
+        eventBlockBreak = createItem(Material.DIAMOND_PICKAXE, GREEN + "Разрушение блока", GRAY + "Происходит, когда игрок разрушает блок");
         eventEditorMenu.setItem(10, eventPlayerJoin);
         eventEditorMenu.setItem(11, eventPlayerQuit);
         eventEditorMenu.setItem(12, eventPlayerDeath);
