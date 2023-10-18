@@ -12,6 +12,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.scoreboard.DisplaySlot;
@@ -21,7 +22,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 
 
@@ -39,10 +39,12 @@ public class SettingsCommand implements CommandExecutor, Listener {
     private ItemStack blankLineItem = new ItemStack(Material.PAPER);
     private ItemStack customLineItem = new ItemStack(Material.MAP);
     private ItemStack realmNameLineItem = new ItemStack(Material.OAK_SIGN);
-    private final List<ChatColor> colorsList = Arrays.asList(
-            BLACK, DARK_BLUE, DARK_GREEN, DARK_AQUA, DARK_RED, DARK_PURPLE, GOLD,
-            DARK_GRAY, BLUE, GREEN, AQUA, RED, LIGHT_PURPLE
-    );
+    private List<ChatColor> colorsList = new ArrayList<>(Arrays.asList(
+            BLACK, DARK_BLUE, DARK_GREEN,
+            DARK_AQUA, DARK_RED, DARK_PURPLE,
+            GOLD, DARK_GRAY, BLUE,
+            GREEN, AQUA, RED, LIGHT_PURPLE
+    ));
     private ItemStack eventPlayerJoin = new ItemStack(Material.OAK_DOOR);
     private ItemStack eventPlayerQuit = new ItemStack(Material.RED_BED);
     private ItemStack eventPlayerDeath = new ItemStack(Material.DIAMOND_SWORD);
@@ -52,9 +54,11 @@ public class SettingsCommand implements CommandExecutor, Listener {
     private ItemStack eventPlayerEnterPortal = new ItemStack(Material.NETHER_PORTAL);
     private ItemStack eventPlayerDamage = new ItemStack(Material.DIAMOND_CHESTPLATE);
     private ItemStack eventBlockBreak = new ItemStack(Material.DIAMOND_PICKAXE);
+    private Inventory scoreboardEditorMenu;
 
 
     SettingsCommand() {
+        scoreboardEditorMenu = createScoreBoardEditorMenu();
         this.scoreboardEditorItem = createItem(Material.FILLED_MAP, GREEN + "Редактировать Scoreboard", GRAY + "Редактирование текста в панели справа");
         this.eventEditorItem = createItem(Material.COBWEB, GREEN + "Редактировать события", GRAY + "Редактирование действий при происходящем");
         this.backToMainMenuArrow = createItem(Material.ARROW, YELLOW + "Назад", GRAY + "Вернуться в главное меню");
@@ -64,6 +68,7 @@ public class SettingsCommand implements CommandExecutor, Listener {
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, String[] args) {
         if (sender instanceof Player) {
+            updateScoreboard((Player) sender);
             showMainInventory((Player) sender);
         }
         return true;
@@ -76,8 +81,8 @@ public class SettingsCommand implements CommandExecutor, Listener {
         player.openInventory(settingsMenu);
     }
 
-    public void showScoreBoardEditorMenu(Player player) {
-        Inventory scoreboardEditorMenu = player.getServer().createInventory(null, 54, "Настройки Scoreboard");
+    public Inventory createScoreBoardEditorMenu() {
+        scoreboardEditorMenu = Bukkit.getServer().createInventory(null, 54, "Настройки Scoreboard");
         scoreboardEditorMenu.setItem(49, backToMainMenuArrow);
         scoreBoardEditorToDefault = createItem(Material.TNT, RED + "Очистить Scoreboard", GRAY + "Очищает весь Scoreboard");
         scoreboardEditorMenu.setItem(48, scoreBoardEditorToDefault);
@@ -89,7 +94,7 @@ public class SettingsCommand implements CommandExecutor, Listener {
         bookLore.add(GRAY + "10 строк — это ограничение Minecraft");
         infoBook = createItem(Material.BOOK, YELLOW + "Настройки Scoreboard", bookLore);
         scoreboardEditorMenu.setItem(53, infoBook);
-        player.openInventory(scoreboardEditorMenu);
+        return scoreboardEditorMenu;
     }
 
     public void showEventEditorMenu(Player player) {
@@ -126,6 +131,7 @@ public class SettingsCommand implements CommandExecutor, Listener {
         List<String> itemLore = new ArrayList<>();
         itemLore.add(lore);
         itemMeta.setLore(itemLore);
+        itemMeta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
 
         itemStack.setItemMeta(itemMeta);
         return itemStack;
@@ -138,6 +144,7 @@ public class SettingsCommand implements CommandExecutor, Listener {
 
         itemMeta.setDisplayName(displayName);
         itemMeta.setLore(lore);
+        itemMeta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
 
         itemStack.setItemMeta(itemMeta);
         return itemStack;
@@ -157,11 +164,11 @@ public class SettingsCommand implements CommandExecutor, Listener {
 
             if (event.getCurrentItem() != null && event.getCurrentItem().isSimilar(backToScoreboardEditorMenuArrow)) {
                 event.setCancelled(true);
-                showScoreBoardEditorMenu(player);
+                player.openInventory(scoreboardEditorMenu);
             }
             if (event.getCurrentItem() != null && event.getCurrentItem().isSimilar(scoreboardEditorItem)) {
                 event.setCancelled(true);
-                showScoreBoardEditorMenu(player);
+                player.openInventory(scoreboardEditorMenu);
             }
             if (event.getCurrentItem() != null && event.getCurrentItem().isSimilar(scoreBoardEditorToDefault)) {
                 event.setCancelled(true);
@@ -181,6 +188,10 @@ public class SettingsCommand implements CommandExecutor, Listener {
             }
             if (event.getCurrentItem() != null && event.getCurrentItem().isSimilar(blankLineItem)) {
                 event.setCancelled(true);
+                List<String> lore = new ArrayList<>();
+                lore.add(YELLOW + "Нажмите ПКМ для удаления");
+                lore.add(GRAY + "Используйте SHIFT + ПКМ/ЛКМ для смены позиции");
+                scoreboardEditorMenu.setItem(10 + scoreboardContent.size(), createItem(Material.PAPER, GREEN + "Пустая строка", lore));
                 int clr = ThreadLocalRandom.current().nextInt(colorsList.size());
                 scoreboardContent.add(colorsList.get(clr) + " ");
                 colorsList.remove(clr);
@@ -189,6 +200,12 @@ public class SettingsCommand implements CommandExecutor, Listener {
             }
             if (event.getCurrentItem() != null && event.getCurrentItem().isSimilar(customLineItem)) {
                 event.setCancelled(true);
+                List<String> lore = new ArrayList<>();
+                lore.add(GRAY + "Изменение настроек строки");
+                lore.add(YELLOW + "Нажмите ЛКМ для редактирования");
+                lore.add(YELLOW + "Нажмите ПКМ для удаления");
+                lore.add(GRAY + "Используйте SHIFT + ПКМ/ЛКМ для смены позиции");
+                scoreboardEditorMenu.setItem(10 + scoreboardContent.size(), createItem(Material.MAP, GREEN + "Произвольная строка", lore));
                 int clr = ThreadLocalRandom.current().nextInt(colorsList.size());
                 scoreboardContent.add(colorsList.get(clr) + "" + RESET + "Привет, мир!");
                 colorsList.remove(clr);
@@ -197,11 +214,19 @@ public class SettingsCommand implements CommandExecutor, Listener {
             }
             if (event.getCurrentItem() != null && event.getCurrentItem().isSimilar(realmNameLineItem)) {
                 event.setCancelled(true);
+                List<String> lore = new ArrayList<>();
+                lore.add(YELLOW + "Нажмите ПКМ для удаления");
+                lore.add(GRAY + "Используйте SHIFT + ПКМ/ЛКМ для смены позиции");
+                scoreboardEditorMenu.setItem(10 + scoreboardContent.size(), new ItemStackBuilder(Material.OAK_SIGN).setName(GREEN + "Название сервера").setLore(lore).setUnbreakable(true).build());
                 int clr = ThreadLocalRandom.current().nextInt(colorsList.size());
                 scoreboardContent.add(colorsList.get(clr) + "" + RESET + "RealmName");
                 colorsList.remove(clr);
                 updateScoreboard(player);
                 player.sendMessage(GREEN + "Название сервера успешно добавлено!");
+            }
+            if (event.getCurrentItem() != null && event.getCurrentItem().getItemMeta().isUnbreakable() && event.isRightClick() && !event.isShiftClick()) {
+                event.setCancelled(true);
+                player.getInventory().remove(event.getCurrentItem());
             }
 
             if (event.getCurrentItem() != null && event.getCurrentItem().isSimilar(eventEditorItem)) {
