@@ -36,7 +36,7 @@ public class SettingsCommand implements CommandExecutor, Listener {
     private ItemStack customLineItem = new ItemStack(Material.MAP);
     private ItemStack realmNameLineItem = new ItemStack(Material.OAK_SIGN);
     private ItemStack eventPlayerJoin = new ItemStack(Material.OAK_DOOR);
-    private ItemStack eventPlayerQuit = new ItemStack(Material.BED);
+    private ItemStack eventPlayerQuit = new ItemStack(Material.RED_BED);
     private ItemStack eventPlayerDeath = new ItemStack(Material.DIAMOND_SWORD);
     private ItemStack eventPlayerKill = new ItemStack(Material.REDSTONE);
     private ItemStack eventPlayerRespawn = new ItemStack(Material.GOLDEN_APPLE);
