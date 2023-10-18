@@ -21,6 +21,9 @@ import org.jetbrains.annotations.NotNull;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
+
 
 import static org.bukkit.ChatColor.*;
 
@@ -178,8 +181,7 @@ public class SettingsCommand implements CommandExecutor, Listener {
             }
             if (event.getCurrentItem() != null && event.getCurrentItem().isSimilar(blankLineItem)) {
                 event.setCancelled(true);
-                Random rnd = new Random();
-                int clr = rnd.nextInt(0, colorsList.size());
+                int clr = ThreadLocalRandom.current().nextInt(colorsList.size());
                 scoreboardContent.add(colorsList.get(clr) + " ");
                 colorsList.remove(clr);
                 updateScoreboard(player);
@@ -187,8 +189,7 @@ public class SettingsCommand implements CommandExecutor, Listener {
             }
             if (event.getCurrentItem() != null && event.getCurrentItem().isSimilar(customLineItem)) {
                 event.setCancelled(true);
-                Random rnd = new Random();
-                int clr = rnd.nextInt(0, colorsList.size());
+                int clr = ThreadLocalRandom.current().nextInt(colorsList.size());
                 scoreboardContent.add(colorsList.get(clr) + "" + RESET + "Привет, мир!");
                 colorsList.remove(clr);
                 updateScoreboard(player);
@@ -196,8 +197,7 @@ public class SettingsCommand implements CommandExecutor, Listener {
             }
             if (event.getCurrentItem() != null && event.getCurrentItem().isSimilar(realmNameLineItem)) {
                 event.setCancelled(true);
-                Random rnd = new Random();
-                int clr = rnd.nextInt(0, colorsList.size());
+                int clr = ThreadLocalRandom.current().nextInt(colorsList.size());
                 scoreboardContent.add(colorsList.get(clr) + "" + RESET + "RealmName");
                 colorsList.remove(clr);
                 updateScoreboard(player);
