@@ -1,6 +1,7 @@
 package org.desparodev.worldsettings;
 
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -35,6 +36,10 @@ public class SettingsCommand implements CommandExecutor, Listener {
     private ItemStack blankLineItem = new ItemStack(Material.PAPER);
     private ItemStack customLineItem = new ItemStack(Material.MAP);
     private ItemStack realmNameLineItem = new ItemStack(Material.OAK_SIGN);
+    private final List<ChatColor> colorsList = Arrays.asList(
+            BLACK, DARK_BLUE, DARK_GREEN, DARK_AQUA, DARK_RED, DARK_PURPLE, GOLD,
+            DARK_GRAY, BLUE, GREEN, AQUA, RED, LIGHT_PURPLE
+    );
     private ItemStack eventPlayerJoin = new ItemStack(Material.OAK_DOOR);
     private ItemStack eventPlayerQuit = new ItemStack(Material.RED_BED);
     private ItemStack eventPlayerDeath = new ItemStack(Material.DIAMOND_SWORD);
@@ -173,19 +178,28 @@ public class SettingsCommand implements CommandExecutor, Listener {
             }
             if (event.getCurrentItem() != null && event.getCurrentItem().isSimilar(blankLineItem)) {
                 event.setCancelled(true);
-                scoreboardContent.add(WHITE + " ");
+                Random rnd = new Random();
+                int clr = rnd.nextInt(0, colorsList.size());
+                scoreboardContent.add(colorsList.get(clr) + " ");
+                colorsList.remove(clr);
                 updateScoreboard(player);
                 player.sendMessage(GREEN + "Пустая строка успешно добавлена!");
             }
             if (event.getCurrentItem() != null && event.getCurrentItem().isSimilar(customLineItem)) {
                 event.setCancelled(true);
-                scoreboardContent.add(WHITE + "Привет, мир!");
+                Random rnd = new Random();
+                int clr = rnd.nextInt(0, colorsList.size());
+                scoreboardContent.add(colorsList.get(clr) + "" + RESET + "Привет, мир!");
+                colorsList.remove(clr);
                 updateScoreboard(player);
                 player.sendMessage(GREEN + "Произвольная строка успешно добавлена!");
             }
             if (event.getCurrentItem() != null && event.getCurrentItem().isSimilar(realmNameLineItem)) {
                 event.setCancelled(true);
-                scoreboardContent.add(WHITE + "RealmName");
+                Random rnd = new Random();
+                int clr = rnd.nextInt(0, colorsList.size());
+                scoreboardContent.add(colorsList.get(clr) + "" + RESET + "RealmName");
+                colorsList.remove(clr);
                 updateScoreboard(player);
                 player.sendMessage(GREEN + "Название сервера успешно добавлено!");
             }
@@ -193,6 +207,33 @@ public class SettingsCommand implements CommandExecutor, Listener {
             if (event.getCurrentItem() != null && event.getCurrentItem().isSimilar(eventEditorItem)) {
                 event.setCancelled(true);
                 showEventEditorMenu(player);
+            }
+            if (event.getCurrentItem() != null && event.getCurrentItem().isSimilar(eventPlayerJoin)) {
+                event.setCancelled(true);
+            }
+            if (event.getCurrentItem() != null && event.getCurrentItem().isSimilar(eventPlayerQuit)) {
+                event.setCancelled(true);
+            }
+            if (event.getCurrentItem() != null && event.getCurrentItem().isSimilar(eventPlayerDeath)) {
+                event.setCancelled(true);
+            }
+            if (event.getCurrentItem() != null && event.getCurrentItem().isSimilar(eventPlayerKill)) {
+                event.setCancelled(true);
+            }
+            if (event.getCurrentItem() != null && event.getCurrentItem().isSimilar(eventPlayerRespawn)) {
+                event.setCancelled(true);
+            }
+            if (event.getCurrentItem() != null && event.getCurrentItem().isSimilar(eventFishCaught)) {
+                event.setCancelled(true);
+            }
+            if (event.getCurrentItem() != null && event.getCurrentItem().isSimilar(eventPlayerEnterPortal)) {
+                event.setCancelled(true);
+            }
+            if (event.getCurrentItem() != null && event.getCurrentItem().isSimilar(eventPlayerDamage)) {
+                event.setCancelled(true);
+            }
+            if (event.getCurrentItem() != null && event.getCurrentItem().isSimilar(eventBlockBreak)) {
+                event.setCancelled(true);
             }
         }
     }
