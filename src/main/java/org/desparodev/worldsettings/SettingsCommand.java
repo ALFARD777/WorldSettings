@@ -103,8 +103,8 @@ public class SettingsCommand implements CommandExecutor, Listener {
         eventEditorMenu.setItem(14, eventPlayerRespawn);
         eventEditorMenu.setItem(15, eventFishCaught);
         eventEditorMenu.setItem(16, eventPlayerEnterPortal);
-        eventEditorMenu.setItem(19, eventPlayerDamage);
-        eventEditorMenu.setItem(20, eventBlockBreak);
+        eventEditorMenu.setItem(17, eventPlayerDamage);
+        eventEditorMenu.setItem(19, eventBlockBreak);
         player.openInventory(eventEditorMenu);
     }
 
