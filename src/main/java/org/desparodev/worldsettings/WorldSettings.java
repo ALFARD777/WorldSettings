@@ -8,6 +8,7 @@ public final class WorldSettings extends JavaPlugin {
     public void onEnable() {
         SettingsCommand sc = new SettingsCommand();
         Objects.requireNonNull(getCommand("settings")).setExecutor(sc);
+        Objects.requireNonNull(getCommand("reloadSB")).setExecutor(sc);
         getServer().getPluginManager().registerEvents(sc, this);
         getLogger().log(Level.INFO, "Запущен!");
     }

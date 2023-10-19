@@ -1,5 +1,6 @@
 package org.desparodev.worldsettings;
 
+import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -12,7 +13,9 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
+import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
@@ -22,11 +25,9 @@ import org.bukkit.scoreboard.Objective;
 import org.bukkit.scoreboard.Scoreboard;
 import org.jetbrains.annotations.NotNull;
 
-import java.security.cert.CertPathValidatorException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
-
 
 import static org.bukkit.ChatColor.*;
 
@@ -35,9 +36,10 @@ public class SettingsCommand implements CommandExecutor, Listener {
     List<String> scoreboardContent = new ArrayList<>();
 
     // Общие
-    private ItemStack infoBook;
+    private ItemStack infoBook = new ItemStack(Material.BARRIER);
     private ItemStack backToMainMenuArrow = new ItemStack(Material.BARRIER);
     private ItemStack emptyGlass = new ItemStack(Material.BARRIER);
+    int indexToChange = -1;
 
     // Стрелки возврата
     private ItemStack backToScoreboardEditorMenuArrow = new ItemStack(Material.BARRIER);
@@ -51,18 +53,22 @@ public class SettingsCommand implements CommandExecutor, Listener {
     private ItemStack eventEditorItem = new ItemStack(Material.BARRIER);
 
     // Редактор Scoreboard
+    private Scoreboard scoreboard;
     private ItemStack scoreBoardEditorToDefault = new ItemStack(Material.BARRIER);
     private final int scoreItemPosition = 10;
     private ItemStack addScoreboardItem = new ItemStack(Material.BARRIER);
     private ItemStack blankLineItem = new ItemStack(Material.BARRIER);
     private ItemStack customLineItem = new ItemStack(Material.BARRIER);
     private ItemStack realmNameLineItem = new ItemStack(Material.BARRIER);
+    private ItemStack guestsCountLineItem = new ItemStack(Material.BARRIER);
+    private ItemStack currentGamemodeLineItem = new ItemStack(Material.BARRIER);
     private final List<ChatColor> colorsList = new ArrayList<>(Arrays.asList(
             BLACK, DARK_BLUE, DARK_GREEN,
             DARK_AQUA, DARK_RED, DARK_PURPLE,
             GOLD, DARK_GRAY, BLUE,
             GREEN, AQUA, RED, LIGHT_PURPLE
     ));
+    private ItemStack textChangeOnCustomLine = new ItemStack(Material.BARRIER);
 
     // Редактор событий
     private ItemStack eventPlayerJoin = new ItemStack(Material.BARRIER);
@@ -79,11 +85,12 @@ public class SettingsCommand implements CommandExecutor, Listener {
     // Подтверждение
     private ItemStack applyActionYes = new ItemStack(Material.BARRIER);
     private ItemStack applyActionNo = new ItemStack(Material.BARRIER);
-    private String applyAction = "";
+    private String currentAction = "";
 
 
     // КОНСТРУКТОР
     SettingsCommand() {
+        this.scoreboard = createNewScoreboard();
         this.scoreboardEditorMenu = createScoreBoardEditorMenu();
         this.quitMenuItem = createItem(Material.DARK_OAK_DOOR, RED + "Выйти из меню настроек");
         this.scoreboardEditorItem = createItem(Material.FILLED_MAP, GREEN + "Редактировать Scoreboard", GRAY + "Редактирование текста в панели справа");
@@ -95,7 +102,11 @@ public class SettingsCommand implements CommandExecutor, Listener {
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, String[] args) {
         if (sender instanceof Player) {
-            showMainInventory((Player) sender);
+            if (command.getName().equals("settings")) {
+                showMainInventory((Player) sender);
+            } else if (command.getName().equals("reloadSB")) {
+                performUpdateScoreboards((Player) sender);
+            }
         }
         return true;
     }
@@ -104,82 +115,77 @@ public class SettingsCommand implements CommandExecutor, Listener {
     @EventHandler
     public void onInventoryClick(InventoryClickEvent event) {
         if (event.getClickedInventory() != null && event.getCurrentItem() != null) {
+            event.setCancelled(true);
             Player player = (Player) event.getWhoClicked();
             ItemStack item = event.getCurrentItem();
 
             // ОБЩЕЕ
-            // Книга описания
-            if (item.isSimilar(infoBook)) {
-                event.setCancelled(true);
-            }
             // Возврат в главное меню
             if (item.isSimilar(backToMainMenuArrow)) {
-                event.setCancelled(true);
                 showMainInventory(player);
             }
 
             // ГЛАВНОЕ МЕНЮ
             // Выход из меню
             if (item.isSimilar(quitMenuItem)) {
-                event.setCancelled(true);
                 player.closeInventory(InventoryCloseEvent.Reason.PLAYER);
             }
             // Открытие редактора ScoreBoard
             if (item.isSimilar(scoreboardEditorItem)) {
-                event.setCancelled(true);
                 player.openInventory(scoreboardEditorMenu);
             }
             // Открытие редактора событий
             if (item.isSimilar(eventEditorItem)) {
-                event.setCancelled(true);
                 showEventEditorMenu(player);
             }
 
             // РЕДАКТОР SCOREBOARD
             // Назад в редактор Scoreboard
             if (item.isSimilar(backToScoreboardEditorMenuArrow)) {
-                event.setCancelled(true);
                 player.openInventory(scoreboardEditorMenu);
             }
             // Возврат к стандартным
             if (item.isSimilar(scoreBoardEditorToDefault)) {
-                event.setCancelled(true);
-                applyAction = "ScoreBoardToDefault";
+                currentAction = "ScoreBoardToDefault";
                 showApplyActionMenu(player);
             }
             // Подменю - добавить строку в Scoreboard
             if (item.isSimilar(addScoreboardItem)) {
-                event.setCancelled(true);
                 Inventory addScoreboardLineMenu = player.getServer().createInventory(null, 54, "Добавить линию");
-
+                emptyGlass = createItem(Material.BLACK_STAINED_GLASS_PANE, WHITE + " ");
+                for (int i = 0; i < 54; i++) {
+                    addScoreboardLineMenu.setItem(i, emptyGlass);
+                }
                 blankLineItem = createItem(Material.PAPER, GREEN + "Пустая строка", getBlankLineItemLore());
                 addScoreboardLineMenu.setItem(10, blankLineItem);
                 customLineItem = createItem(Material.MAP, GREEN + "Произвольная строка", getCustomLineItemLore());
                 addScoreboardLineMenu.setItem(11, customLineItem);
                 realmNameLineItem = createItem(Material.OAK_SIGN, GREEN + "Название реалма", getRealmNameLineItemLore());
                 addScoreboardLineMenu.setItem(12, realmNameLineItem);
+                guestsCountLineItem = createItem(Material.PLAYER_HEAD, GREEN + "Количество игроков", getGuestsCountLineItemLore());
+                addScoreboardLineMenu.setItem(13, guestsCountLineItem);
+                currentGamemodeLineItem = createItem(Material.DIAMOND, GREEN + "Текущий игровой режим", getCurrentGamemodeLineItemLore());
+                addScoreboardLineMenu.setItem(14, currentGamemodeLineItem);
                 addScoreboardLineMenu.setItem(49, backToScoreboardEditorMenuArrow);
                 player.openInventory(addScoreboardLineMenu);
             }
-            // Добавить пустую строку
+            // Добавить пустую строку Scoreboard
             if (item.isSimilar(blankLineItem)) {
-                event.setCancelled(true);
                 if (scoreboardContent.size() < 10) {
                     List<String> lore = new ArrayList<>();
                     lore.add(YELLOW + "Нажмите ПКМ для удаления");
                     lore.add(GRAY + "Используйте SHIFT + ПКМ/ЛКМ для смены позиции");
                     scoreboardEditorMenu.setItem(9 + scoreboardContent.size(), new ItemStackBuilder(createItem(Material.PAPER, GREEN + "Пустая строка", lore)).setUnbreakable(true).build());
                     int clr = ThreadLocalRandom.current().nextInt(colorsList.size());
-                    scoreboardContent.add(colorsList.get(clr) + " ");
+                    scoreboardContent.add(colorsList.get(clr) + "" + WHITE + " ");
                     colorsList.remove(clr);
-                    updateScoreboards();
+                    updateScoreboards(player);
                     player.openInventory(scoreboardEditorMenu);
                     player.sendMessage(GREEN + "Пустая строка успешно добавлена!");
                 }
             }
-            // Добавить кастомную строку
+            // Добавить кастомную строку Scoreboard
             if (item.isSimilar(customLineItem)) {
-                event.setCancelled(true);
                 if (scoreboardContent.size() < 10) {
                     List<String> lore = new ArrayList<>();
                     lore.add(GRAY + "Изменение настроек строки");
@@ -190,35 +196,61 @@ public class SettingsCommand implements CommandExecutor, Listener {
                     int clr = ThreadLocalRandom.current().nextInt(colorsList.size());
                     scoreboardContent.add(colorsList.get(clr) + "" + RESET + "Привет, мир!");
                     colorsList.remove(clr);
-                    updateScoreboards();
+                    updateScoreboards(player);
                     player.openInventory(scoreboardEditorMenu);
                     player.sendMessage(GREEN + "Произвольная строка успешно добавлена!");
                 }
             }
-            // Добавить строку названия реалма
+            // Добавить строку названия реалма в Scoreboard
             if (item.isSimilar(realmNameLineItem)) {
-                event.setCancelled(true);
                 if (scoreboardContent.size() < 10) {
                     List<String> lore = new ArrayList<>();
                     lore.add(YELLOW + "Нажмите ПКМ для удаления");
                     lore.add(GRAY + "Используйте SHIFT + ПКМ/ЛКМ для смены позиции");
                     scoreboardEditorMenu.setItem(9 + scoreboardContent.size(), new ItemStackBuilder(createItem(Material.OAK_SIGN, GREEN + "Название сервера", lore)).setUnbreakable(true).build());
                     int clr = ThreadLocalRandom.current().nextInt(colorsList.size());
-                    scoreboardContent.add(colorsList.get(clr) + "" + RESET + "RealmName");
+                    scoreboardContent.add(colorsList.get(clr) + "" + RESET + "%realmName%");
                     colorsList.remove(clr);
-                    updateScoreboards();
+                    updateScoreboards(player);
                     player.openInventory(scoreboardEditorMenu);
                     player.sendMessage(GREEN + "Название сервера успешно добавлено!");
                 }
             }
-            // Удаление
+            if (item.isSimilar(guestsCountLineItem)) {
+                if (scoreboardContent.size() < 10) {
+                    List<String> lore = new ArrayList<>();
+                    lore.add(YELLOW + "Нажмите ПКМ для удаления");
+                    lore.add(GRAY + "Используйте SHIFT + ПКМ/ЛКМ для смены позиции");
+                    scoreboardEditorMenu.setItem(9 + scoreboardContent.size(), new ItemStackBuilder(createItem(Material.PLAYER_HEAD, GREEN + "Количество игроков", lore)).setUnbreakable(true).build());
+                    int clr = ThreadLocalRandom.current().nextInt(colorsList.size());
+                    scoreboardContent.add(colorsList.get(clr) + "" + RESET + "%playersCount%");
+                    colorsList.remove(clr);
+                    updateScoreboards(player);
+                    player.openInventory(scoreboardEditorMenu);
+                    player.sendMessage(GREEN + "Количество игроков успешно добавлено!");
+                }
+            }
+            if (item.isSimilar(currentGamemodeLineItem)) {
+                if (scoreboardContent.size() < 10) {
+                    List<String> lore = new ArrayList<>();
+                    lore.add(YELLOW + "Нажмите ПКМ для удаления");
+                    lore.add(GRAY + "Используйте SHIFT + ПКМ/ЛКМ для смены позиции");
+                    scoreboardEditorMenu.setItem(9 + scoreboardContent.size(), new ItemStackBuilder(createItem(Material.DIAMOND, GREEN + "Текущий игровой режим", lore)).setUnbreakable(true).build());
+                    int clr = ThreadLocalRandom.current().nextInt(colorsList.size());
+                    scoreboardContent.add(colorsList.get(clr) + "" + RESET + "%currentGamemode%");
+                    colorsList.remove(clr);
+                    updateScoreboards(player);
+                    player.openInventory(scoreboardEditorMenu);
+                    player.sendMessage(GREEN + "Текущий игровой режим успешно добавлен!");
+                }
+            }
+            // Удаление строки Scoreboard
             if (item.getItemMeta().isUnbreakable() && event.isRightClick() && !event.isShiftClick()) {
-                event.setCancelled(true);
                 Inventory inventory = event.getClickedInventory();
                 inventory.setItem(event.getSlot(), null);
                 int row = event.getSlot() / 9;
                 int startSlot = row * 9;
-                int endSlot = row * 9 + 8;
+                int endSlot = inventory.getSize() - 10;
                 for (int slot = event.getSlot() + 1; slot <= endSlot; slot++) {
                     ItemStack nextItem = inventory.getItem(slot);
                     if (nextItem != null) {
@@ -226,10 +258,43 @@ public class SettingsCommand implements CommandExecutor, Listener {
                         inventory.setItem(slot, null);
                     }
                 }
+                emptyGlass = createItem(Material.BLACK_STAINED_GLASS_PANE, WHITE + " ");
+                inventory.setItem(endSlot, emptyGlass);
                 player.updateInventory();
+                if (inventory.contains(scoreBoardEditorToDefault)) {
+                    scoreboardContent.remove(event.getSlot() - 9);
+                    updateScoreboards(player);
+                }
                 player.sendMessage(GREEN + "Компонент успешно удален!");
             }
-
+            // Редактирование произвольной строки Scoreboard
+            if (item.getItemMeta().isUnbreakable() && Objects.requireNonNull(item.getLore()).contains(YELLOW + "Нажмите ЛКМ для редактирования") && event.isLeftClick() && !event.isShiftClick()) {
+                Inventory inventory = event.getClickedInventory();
+                if (inventory.contains(scoreBoardEditorToDefault)) {
+                    Inventory editMenu = player.getServer().createInventory(null, 36, "Настройки компонента");
+                    emptyGlass = createItem(Material.BLACK_STAINED_GLASS_PANE, WHITE + " ");
+                    for (int i = 0; i < 36; i++) {
+                        editMenu.setItem(i, emptyGlass);
+                    }
+                    editMenu.setItem(31, backToScoreboardEditorMenuArrow);
+                    List<String> lore = new ArrayList<>();
+                    lore.add(" ");
+                    lore.add(GRAY + "Текущее значение:");
+                    lore.add(scoreboardContent.get(event.getSlot() - 9));
+                    textChangeOnCustomLine = createItem(Material.BOOK, GREEN + "Текст", lore);
+                    editMenu.setItem(10, textChangeOnCustomLine);
+                    player.openInventory(editMenu);
+                    indexToChange = event.getSlot() - 9;
+                }
+            }
+            if (item.isSimilar(textChangeOnCustomLine)) {
+                player.closeInventory();
+                String currentValue = Objects.requireNonNull(item.getLore()).get(2);
+                player.sendMessage(GREEN + "Введите текст в чат, который Вы хотите установить или \"UNDO\" для отмены");
+                player.sendMessage(MiniMessage.miniMessage().deserialize("<color:gray>[<color:red><hover:show_text:'<color:green>Нажмите с зажатым SHIFT'><insert:" + currentValue + ">Прошлое значение</insert></hover><color:gray>]"));
+                currentAction = "ScoreboardCustomLineChange";
+                inputMap.put(player, "%waitingInput%");
+            }
 
             if (item.isSimilar(eventPlayerJoin)) {
                 event.setCancelled(true);
@@ -263,32 +328,30 @@ public class SettingsCommand implements CommandExecutor, Listener {
             // МЕНЮ ПОДТВЕРЖДЕНИЯ ДЕЙСТВИЯ
             // Если подтвердил
             if (item.isSimilar(applyActionYes)) {
-                event.setCancelled(true);
-                switch (applyAction) {
+                switch (currentAction) {
                     case "ScoreBoardToDefault":
-                        applyAction = "";
+                        currentAction = "";
                         player.openInventory(scoreboardEditorMenu);
                         scoreboardContent.clear();
-                        updateScoreboards();
+                        updateScoreboards(player);
                         for (int i = 10; i < 45; i++) {
                             scoreboardEditorMenu.clear(i);
                         }
+                        break;
+                    case "Coming Soon...":
                         break;
                 }
             }
             // Если отменил
             if (item.isSimilar(applyActionNo)) {
-                event.setCancelled(true);
-                switch (applyAction) {
+                switch (currentAction) {
                     case "ScoreBoardToDefault":
-                        applyAction = "";
+                        currentAction = "";
                         player.openInventory(scoreboardEditorMenu);
                         break;
+                    case "Coming Soon...":
+                        break;
                 }
-            }
-            // Стекло пустоты
-            if (item.isSimilar(emptyGlass)) {
-                event.setCancelled(true);
             }
         }
     }
@@ -332,17 +395,61 @@ public class SettingsCommand implements CommandExecutor, Listener {
         return list;
     }
 
+    // Получение лора для строки Scoreboard с количеством игроков
+    @NotNull
+    private List<String> getGuestsCountLineItemLore() {
+        List<String> list = new ArrayList<>();
+        list.add(DARK_GRAY + "1 строка");
+        list.add(" ");
+        list.add(GRAY + "Отображает количество игроков на вашем реалме");
+        list.add(" ");
+        list.add(GRAY + "Пример:");
+        list.add(WHITE + "Игроки: 10");
+        if (scoreboardContent.size() >= 10) list.add(RED + "Scoreboard полон!");
+        return list;
+    }
+
+    // Получение лора для строки Scoreboard с текущим игровым режимом
+    @NotNull
+    private List<String> getCurrentGamemodeLineItemLore() {
+        List<String> list = new ArrayList<>();
+        list.add(DARK_GRAY + "1 строка");
+        list.add(" ");
+        list.add(GRAY + "Отображает текущий игровой режим каждому игроку");
+        list.add(" ");
+        list.add(GRAY + "Пример:");
+        list.add(WHITE + "Режим: " + YELLOW + "CREATIVE");
+        if (scoreboardContent.size() >= 10) list.add(RED + "Scoreboard полон!");
+        return list;
+    }
+
     // ВСЕ СОБЫТИЯ
     // Подключение игрока
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
-        createNewScoreboard(event.getPlayer());
+        scoreboard = createNewScoreboard(event.getPlayer());
+        event.getPlayer().setScoreboard(scoreboard);
+
+        // ЧТОБЫ РАБОТАЛ, А НЕ КАМНИ СВОИ ЕБУЧИЕ СТАВИЛ
+        Player player = event.getPlayer();
+        player.setInvulnerable(true); // Заморозить игрока
+        player.setAllowFlight(false); // Запретить полет
+        player.setHealth(20); // Установить полное здоровье
+        player.setFoodLevel(20); // Установить максимальный уровень голода
+        player.setWalkSpeed(0.0f); // Установить скорость ходьбы на 0.0, что предотвращает передвижение
+        player.setFlySpeed(0.0f); // Установить скорость полета на 0.0, что предотвращает полет
+        player.setJumping(false); // Отключить возможность прыжков
     }
 
+    // Отключение игрока
+    @EventHandler
+    public void onPlayerQuit(PlayerQuitEvent event) {
+        inputMap.remove(event.getPlayer());
+    }
 
     // ПРОЧЕЕ
     // Отображение главного меню
-    public void showMainInventory(Player player) {
+    private void showMainInventory(Player player) {
         Inventory settingsMenu = player.getServer().createInventory(null, 54, "Настройки Realm");
         emptyGlass = createItem(Material.BLACK_STAINED_GLASS_PANE, WHITE + " ");
         for (int i = 0; i < 54; i++) {
@@ -403,6 +510,12 @@ public class SettingsCommand implements CommandExecutor, Listener {
         eventEditorMenu.setItem(16, eventPlayerEnterPortal);
         eventEditorMenu.setItem(17, eventPlayerDamage);
         eventEditorMenu.setItem(19, eventBlockBreak);
+        List<String> bookLore = new ArrayList<>();
+        bookLore.add(GRAY + "Позволяет вам редактировать отображаемую");
+        bookLore.add(GRAY + "справа экрана панель, но только до");
+        bookLore.add(GRAY + "10 строк — это ограничение Minecraft");
+        infoBook = createItem(Material.BOOK, YELLOW + "Настройки Scoreboard", bookLore);
+        scoreboardEditorMenu.setItem(53, infoBook);
         player.openInventory(eventEditorMenu);
     }
 
@@ -422,43 +535,90 @@ public class SettingsCommand implements CommandExecutor, Listener {
 
 
     // Создание нового Scoreboard
-    private void createNewScoreboard(Player player) {
+    private Scoreboard createNewScoreboard(Player player) {
         Scoreboard scoreboard = Bukkit.getScoreboardManager().getNewScoreboard();
-        Objective objective = addPlayerLines(scoreboard.registerNewObjective("SCOREBOARD", "dummy"));
+        Objective objective = addPlayerLines(scoreboard.registerNewObjective("SCOREBOARD", "dummy"), player);
         objective.setDisplaySlot(DisplaySlot.SIDEBAR);
         objective.setDisplayName(YELLOW + "" + BOLD + "REALM");
         objective.getScore(GRAY + new SimpleDateFormat("dd/MM/yy").format(new Date())).setScore(scoreboardContent.size() + 3);
         objective.getScore(WHITE + " ").setScore(scoreboardContent.size() + 2);
         objective.getScore(WHITE + "").setScore(1);
         objective.getScore(YELLOW + "easy-realm.ru").setScore(0);
-        player.setScoreboard(scoreboard);
+        return scoreboard;
+    }
+
+    private Scoreboard createNewScoreboard() {
+        Scoreboard scoreboard = Bukkit.getScoreboardManager().getNewScoreboard();
+        Objective objective = scoreboard.registerNewObjective("SCOREBOARD", "dummy");
+        objective.setDisplaySlot(DisplaySlot.SIDEBAR);
+        objective.setDisplayName(YELLOW + "" + BOLD + "REALM");
+        objective.getScore(GRAY + new SimpleDateFormat("dd/MM/yy").format(new Date())).setScore(scoreboardContent.size() + 3);
+        objective.getScore(WHITE + " ").setScore(scoreboardContent.size() + 2);
+        objective.getScore(WHITE + "").setScore(1);
+        objective.getScore(YELLOW + "easy-realm.ru").setScore(0);
+        return scoreboard;
     }
 
     // Обновление Scoreboard у всех пользователей
-    private void updateScoreboards() {
-        Scoreboard scoreboard = Bukkit.getScoreboardManager().getNewScoreboard();
-        Objective objective = addPlayerLines(scoreboard.registerNewObjective("SCOREBOARD", "dummy"));
-        objective.setDisplaySlot(DisplaySlot.SIDEBAR);
-        objective.setDisplayName(YELLOW + "" + BOLD + "REALM");
-        objective.getScore(GRAY + new SimpleDateFormat("dd/MM/yy").format(new Date())).setScore(scoreboardContent.size() + 3);
-        objective.getScore(WHITE + " ").setScore(scoreboardContent.size() + 2);
-        objective.getScore(WHITE + "").setScore(1);
-        objective.getScore(YELLOW + "easy-realm.ru").setScore(0);
+    private void updateScoreboards(Player player) {
+        player.performCommand("reloadSB");
+    }
+
+    private void performUpdateScoreboards(Player player) {
+        player.setScoreboard(Bukkit.getScoreboardManager().getNewScoreboard());
         for (Player onlinePlayer : Bukkit.getOnlinePlayers()) {
-            onlinePlayer.setScoreboard(scoreboard);
+            onlinePlayer.setScoreboard(createNewScoreboard(player));
         }
     }
 
     // Добавление пользовательских строк в Scoreboard
-    private Objective addPlayerLines(Objective objective) {
+    private Objective addPlayerLines(Objective objective, Player player) {
         if (!scoreboardContent.isEmpty()) {
             int scoreValue = scoreboardContent.size() + 1;
             for (String content : scoreboardContent) {
-                objective.getScore(WHITE + content).setScore(scoreValue);
+                if (content.contains("%playersCount%"))
+                    objective.getScore(WHITE + "Игроки: " + player.getServer().getOnlinePlayers().size()).setScore(scoreValue);
+                else if (content.contains("%realmName%"))
+                    objective.getScore(WHITE + "Название: ").setScore(scoreValue);
+                else if (content.contains("%currentGamemode%"))
+                    objective.getScore(WHITE + "Игровой режим: " + YELLOW + player.getGameMode()).setScore(scoreValue);
+                else objective.getScore(WHITE + content).setScore(scoreValue);
                 scoreValue--;
             }
         }
         return objective;
+    }
+
+    // CALLBACK ДЛЯ ЧАТА
+    private final Map<Player, String> inputMap = new HashMap<>();
+
+    @EventHandler
+    public void onPlayerChat(AsyncPlayerChatEvent event) {
+        Player player = event.getPlayer();
+        String message = event.getMessage();
+
+        if (inputMap.containsKey(player) && inputMap.containsValue("%waitingInput%")) {
+            event.setCancelled(true);
+            if (message.equalsIgnoreCase("UNDO")) {
+                String userInput = inputMap.get(player);
+                inputMap.remove(player);
+                player.sendMessage(RED + "Вы отменили ввод");
+            } else {
+                inputMap.put(player, message);
+                player.sendMessage(GREEN + "Новое значение: " + message);
+                player.sendMessage(RED + "" + BOLD + "Для обновления Scoreboard введите команду /reloadsb или перезайдите");
+                switch (currentAction) {
+                    case "ScoreboardCustomLineChange":
+                        scoreboardContent.set(indexToChange, message);
+                        inputMap.remove(player);
+                        updateScoreboards(player);
+                        player.openInventory(scoreboardEditorMenu);
+                        break;
+                    case "Coming Soon...":
+                        break;
+                }
+            }
+        }
     }
 
     // ВСЕ МЕТОДЫ СОЗДАНИЯ ПРЕДМЕТОВ
