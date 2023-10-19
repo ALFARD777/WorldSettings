@@ -13,6 +13,10 @@ public class ItemStackBuilder {
         this.item = new ItemStack(material);
     }
 
+    public ItemStackBuilder(ItemStack itemStack) {
+        this.item = itemStack;
+    }
+
     public ItemStackBuilder setName(String name) {
         ItemMeta meta = item.getItemMeta();
         meta.setDisplayName(name);
