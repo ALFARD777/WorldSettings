@@ -6,8 +6,9 @@ import java.util.logging.Level;
 public final class WorldSettings extends JavaPlugin {
     @Override
     public void onEnable() {
-        Objects.requireNonNull(getCommand("settings")).setExecutor(new SettingsCommand());
-        getServer().getPluginManager().registerEvents(new SettingsCommand(), this);
+        SettingsCommand sc = new SettingsCommand();
+        Objects.requireNonNull(getCommand("settings")).setExecutor(sc);
+        getServer().getPluginManager().registerEvents(sc, this);
         getLogger().log(Level.INFO, "Запущен!");
     }
     @Override

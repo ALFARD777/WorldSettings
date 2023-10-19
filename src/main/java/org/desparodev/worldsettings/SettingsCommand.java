@@ -29,46 +29,50 @@ import static org.bukkit.ChatColor.*;
 
 public class SettingsCommand implements CommandExecutor, Listener {
     List<String> scoreboardContent = new ArrayList<>();
-    private ItemStack infoBook = new ItemStack(Material.BOOK);
-    private final ItemStack scoreboardEditorItem;
-    private final ItemStack eventEditorItem;
-    private final ItemStack backToMainMenuArrow;
-    private final ItemStack backToScoreboardEditorMenuArrow;
-    private ItemStack scoreBoardEditorToDefault = new ItemStack(Material.TNT);
-    private ItemStack addScoreboardItem = new ItemStack(Material.PAPER);
-    private ItemStack blankLineItem = new ItemStack(Material.PAPER);
-    private ItemStack customLineItem = new ItemStack(Material.MAP);
-    private ItemStack realmNameLineItem = new ItemStack(Material.OAK_SIGN);
+    private ItemStack infoBook;
+    private ItemStack scoreboardEditorItem = new ItemStack(Material.BARRIER);
+    private ItemStack eventEditorItem = new ItemStack(Material.BARRIER);
+    private ItemStack backToMainMenuArrow = new ItemStack(Material.BARRIER);
+    private ItemStack backToScoreboardEditorMenuArrow = new ItemStack(Material.BARRIER);
+    private ItemStack scoreBoardEditorToDefault = new ItemStack(Material.BARRIER);
+    private ItemStack addScoreboardItem = new ItemStack(Material.BARRIER);
+    private ItemStack blankLineItem = new ItemStack(Material.BARRIER);
+    private ItemStack customLineItem = new ItemStack(Material.BARRIER);
+    private ItemStack realmNameLineItem = new ItemStack(Material.BARRIER);
     private List<ChatColor> colorsList = new ArrayList<>(Arrays.asList(
             BLACK, DARK_BLUE, DARK_GREEN,
             DARK_AQUA, DARK_RED, DARK_PURPLE,
             GOLD, DARK_GRAY, BLUE,
             GREEN, AQUA, RED, LIGHT_PURPLE
     ));
-    private ItemStack eventPlayerJoin = new ItemStack(Material.OAK_DOOR);
-    private ItemStack eventPlayerQuit = new ItemStack(Material.RED_BED);
-    private ItemStack eventPlayerDeath = new ItemStack(Material.DIAMOND_SWORD);
-    private ItemStack eventPlayerKill = new ItemStack(Material.REDSTONE);
-    private ItemStack eventPlayerRespawn = new ItemStack(Material.GOLDEN_APPLE);
-    private ItemStack eventFishCaught = new ItemStack(Material.FISHING_ROD);
-    private ItemStack eventPlayerEnterPortal = new ItemStack(Material.NETHER_PORTAL);
-    private ItemStack eventPlayerDamage = new ItemStack(Material.DIAMOND_CHESTPLATE);
-    private ItemStack eventBlockBreak = new ItemStack(Material.DIAMOND_PICKAXE);
+    private ItemStack eventPlayerJoin = new ItemStack(Material.BARRIER);
+    private ItemStack eventPlayerQuit = new ItemStack(Material.BARRIER);
+    private ItemStack eventPlayerDeath = new ItemStack(Material.BARRIER);
+    private ItemStack eventPlayerKill = new ItemStack(Material.BARRIER);
+    private ItemStack eventPlayerRespawn = new ItemStack(Material.BARRIER);
+    private ItemStack eventFishCaught = new ItemStack(Material.BARRIER);
+    private ItemStack eventPlayerEnterPortal = new ItemStack(Material.BARRIER);
+    private ItemStack eventPlayerDamage = new ItemStack(Material.BARRIER);
+    private ItemStack eventBlockBreak = new ItemStack(Material.BARRIER);
     private Inventory scoreboardEditorMenu;
 
 
+
+    private ItemStack applyActionYes = new ItemStack(Material.BARRIER);
+    private ItemStack applyActionNo = new ItemStack(Material.BARRIER);
+    private String applyAction = "";
+
+
     SettingsCommand() {
-        scoreboardEditorMenu = createScoreBoardEditorMenu();
+        this.scoreboardEditorMenu = createScoreBoardEditorMenu();
         this.scoreboardEditorItem = createItem(Material.FILLED_MAP, GREEN + "Редактировать Scoreboard", GRAY + "Редактирование текста в панели справа");
         this.eventEditorItem = createItem(Material.COBWEB, GREEN + "Редактировать события", GRAY + "Редактирование действий при происходящем");
-        this.backToMainMenuArrow = createItem(Material.ARROW, YELLOW + "Назад", GRAY + "Вернуться в главное меню");
         this.backToScoreboardEditorMenuArrow = createItem(Material.ARROW, YELLOW + "Назад", GRAY + "Вернуться в меню редактирования");
     }
 
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, String[] args) {
         if (sender instanceof Player) {
-            updateScoreboard((Player) sender);
             showMainInventory((Player) sender);
         }
         return true;
@@ -83,6 +87,7 @@ public class SettingsCommand implements CommandExecutor, Listener {
 
     public Inventory createScoreBoardEditorMenu() {
         scoreboardEditorMenu = Bukkit.getServer().createInventory(null, 54, "Настройки Scoreboard");
+        backToMainMenuArrow = createItem(Material.ARROW, YELLOW + "Назад", GRAY + "Вернуться в главное меню");
         scoreboardEditorMenu.setItem(49, backToMainMenuArrow);
         scoreBoardEditorToDefault = createItem(Material.TNT, RED + "Очистить Scoreboard", GRAY + "Очищает весь Scoreboard");
         scoreboardEditorMenu.setItem(48, scoreBoardEditorToDefault);
@@ -99,6 +104,7 @@ public class SettingsCommand implements CommandExecutor, Listener {
 
     public void showEventEditorMenu(Player player) {
         Inventory eventEditorMenu = player.getServer().createInventory(null, 54, "Настройки событий");
+        backToMainMenuArrow = createItem(Material.ARROW, YELLOW + "Назад", GRAY + "Вернуться в главное меню");
         eventEditorMenu.setItem(49, backToMainMenuArrow);
         eventPlayerJoin = createItem(Material.OAK_DOOR, GREEN + "Подключение игрока", GRAY + "Происходит, когда игрок заходит на сервер");
         eventPlayerQuit = createItem(Material.RED_BED, GREEN + "Выход игрока", GRAY + "Происходит, когда игрок выходит с сервера");
@@ -106,7 +112,7 @@ public class SettingsCommand implements CommandExecutor, Listener {
         eventPlayerKill = createItem(Material.REDSTONE, GREEN + "Убийство игрока", GRAY + "Происходит, когда игрок убивает другого игрока");
         eventPlayerRespawn = createItem(Material.GOLDEN_APPLE, GREEN + "Возрождение игрока", GRAY + "Происходит, когда игрок возрождается после смерти");
         eventFishCaught = createItem(Material.FISHING_ROD, GREEN + "Пойманная рыба", GRAY + "Происходит, когда игрок ловит рыбу");
-        eventPlayerEnterPortal = createItem(Material.NETHER_PORTAL, GREEN + "Вход в портал", GRAY + "Происходит, когда игрок входит в портал");
+        eventPlayerEnterPortal = createItem(Material.END_PORTAL_FRAME, GREEN + "Вход в портал", GRAY + "Происходит, когда игрок входит в портал");
         eventPlayerDamage = createItem(Material.DIAMOND_CHESTPLATE, GREEN + "Полученный урон", GRAY + "Происходит, когда игрок получает урон");
         eventBlockBreak = createItem(Material.DIAMOND_PICKAXE, GREEN + "Разрушение блока", GRAY + "Происходит, когда игрок разрушает блок");
         eventEditorMenu.setItem(10, eventPlayerJoin);
@@ -119,6 +125,14 @@ public class SettingsCommand implements CommandExecutor, Listener {
         eventEditorMenu.setItem(17, eventPlayerDamage);
         eventEditorMenu.setItem(19, eventBlockBreak);
         player.openInventory(eventEditorMenu);
+    }
+    public void showApplyActionMenu(Player player) {
+        Inventory applyActionMenu = player.getServer().createInventory(null, 9, RED + "" + BOLD + "Вы уверены?");
+        applyActionYes = createItem(Material.GREEN_CONCRETE, GREEN + "ДА");
+        applyActionNo = createItem(Material.RED_CONCRETE, RED + "НЕТ");
+        applyActionMenu.setItem(3, applyActionYes);
+        applyActionMenu.setItem(5, applyActionNo);
+        player.openInventory(applyActionMenu);
     }
 
     @NotNull
@@ -149,31 +163,59 @@ public class SettingsCommand implements CommandExecutor, Listener {
         itemStack.setItemMeta(itemMeta);
         return itemStack;
     }
+    @NotNull
+    private static ItemStack createItem(Material material, String displayName) {
+        ItemStack itemStack = new ItemStack(material);
+        ItemMeta itemMeta = itemStack.getItemMeta();
+
+        itemMeta.setDisplayName(displayName);
+        itemMeta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
+
+        itemStack.setItemMeta(itemMeta);
+        return itemStack;
+    }
 
     @EventHandler
     public void onInventoryClick(InventoryClickEvent event) {
-        if (event.getClickedInventory() != null) {
+        if (event.getClickedInventory() != null && event.getCurrentItem() != null) {
             Player player = (Player) event.getWhoClicked();
-            if (event.getCurrentItem() != null && event.getCurrentItem().isSimilar(infoBook)) {
+            ItemStack item = event.getCurrentItem();
+
+                // ОБЩЕЕ
+            // Книга описания
+            if (item.isSimilar(infoBook)) {
                 event.setCancelled(true);
             }
-            if (event.getCurrentItem() != null && event.getCurrentItem().isSimilar(backToMainMenuArrow)) {
+            // Возврат в главное меню
+            if (item.isSimilar(backToMainMenuArrow)) {
                 event.setCancelled(true);
                 showMainInventory(player);
             }
 
-            if (event.getCurrentItem() != null && event.getCurrentItem().isSimilar(backToScoreboardEditorMenuArrow)) {
+                // ГЛАВНОЕ МЕНЮ
+            if (item.isSimilar(scoreboardEditorItem)) {
                 event.setCancelled(true);
                 player.openInventory(scoreboardEditorMenu);
             }
-            if (event.getCurrentItem() != null && event.getCurrentItem().isSimilar(scoreboardEditorItem)) {
+            if (item.isSimilar(eventEditorItem)) {
+                event.setCancelled(true);
+                showEventEditorMenu(player);
+            }
+
+                // РЕДАКТОР SCOREBOARD
+            // Назад в редактор Scoreboard
+            if (item.isSimilar(backToScoreboardEditorMenuArrow)) {
                 event.setCancelled(true);
                 player.openInventory(scoreboardEditorMenu);
             }
-            if (event.getCurrentItem() != null && event.getCurrentItem().isSimilar(scoreBoardEditorToDefault)) {
+            // Возврат к стандартным
+            if (item.isSimilar(scoreBoardEditorToDefault)) {
                 event.setCancelled(true);
+                applyAction = "ScoreBoardToDefault";
+                showApplyActionMenu(player);
             }
-            if (event.getCurrentItem() != null && event.getCurrentItem().isSimilar(addScoreboardItem)) {
+                // Подменю - добавить строку в Scoreboard
+            if (item.isSimilar(addScoreboardItem)) {
                 event.setCancelled(true);
                 Inventory addScoreboardLineMenu = player.getServer().createInventory(null, 54, "Добавить линию");
 
@@ -186,7 +228,8 @@ public class SettingsCommand implements CommandExecutor, Listener {
                 addScoreboardLineMenu.setItem(49, backToScoreboardEditorMenuArrow);
                 player.openInventory(addScoreboardLineMenu);
             }
-            if (event.getCurrentItem() != null && event.getCurrentItem().isSimilar(blankLineItem)) {
+            // Добавить пустую строку
+            if (item.isSimilar(blankLineItem)) {
                 event.setCancelled(true);
                 List<String> lore = new ArrayList<>();
                 lore.add(YELLOW + "Нажмите ПКМ для удаления");
@@ -195,10 +238,11 @@ public class SettingsCommand implements CommandExecutor, Listener {
                 int clr = ThreadLocalRandom.current().nextInt(colorsList.size());
                 scoreboardContent.add(colorsList.get(clr) + " ");
                 colorsList.remove(clr);
-                updateScoreboard(player);
+                updateScoreboards();
                 player.sendMessage(GREEN + "Пустая строка успешно добавлена!");
             }
-            if (event.getCurrentItem() != null && event.getCurrentItem().isSimilar(customLineItem)) {
+            // Добавить кастомную строку
+            if (item.isSimilar(customLineItem)) {
                 event.setCancelled(true);
                 List<String> lore = new ArrayList<>();
                 lore.add(GRAY + "Изменение настроек строки");
@@ -209,10 +253,11 @@ public class SettingsCommand implements CommandExecutor, Listener {
                 int clr = ThreadLocalRandom.current().nextInt(colorsList.size());
                 scoreboardContent.add(colorsList.get(clr) + "" + RESET + "Привет, мир!");
                 colorsList.remove(clr);
-                updateScoreboard(player);
+                updateScoreboards();
                 player.sendMessage(GREEN + "Произвольная строка успешно добавлена!");
             }
-            if (event.getCurrentItem() != null && event.getCurrentItem().isSimilar(realmNameLineItem)) {
+            // Добавить строку названия реалма
+            if (item.isSimilar(realmNameLineItem)) {
                 event.setCancelled(true);
                 List<String> lore = new ArrayList<>();
                 lore.add(YELLOW + "Нажмите ПКМ для удаления");
@@ -221,44 +266,70 @@ public class SettingsCommand implements CommandExecutor, Listener {
                 int clr = ThreadLocalRandom.current().nextInt(colorsList.size());
                 scoreboardContent.add(colorsList.get(clr) + "" + RESET + "RealmName");
                 colorsList.remove(clr);
-                updateScoreboard(player);
+                updateScoreboards();
                 player.sendMessage(GREEN + "Название сервера успешно добавлено!");
             }
-            if (event.getCurrentItem() != null && event.getCurrentItem().getItemMeta().isUnbreakable() && event.isRightClick() && !event.isShiftClick()) {
+            // Удаление
+            if (item.getItemMeta().isUnbreakable()) {
                 event.setCancelled(true);
                 player.getInventory().remove(event.getCurrentItem());
             }
 
-            if (event.getCurrentItem() != null && event.getCurrentItem().isSimilar(eventEditorItem)) {
-                event.setCancelled(true);
-                showEventEditorMenu(player);
-            }
-            if (event.getCurrentItem() != null && event.getCurrentItem().isSimilar(eventPlayerJoin)) {
+
+            if (item.isSimilar(eventPlayerJoin)) {
                 event.setCancelled(true);
             }
-            if (event.getCurrentItem() != null && event.getCurrentItem().isSimilar(eventPlayerQuit)) {
+            if (item.isSimilar(eventPlayerQuit)) {
                 event.setCancelled(true);
             }
-            if (event.getCurrentItem() != null && event.getCurrentItem().isSimilar(eventPlayerDeath)) {
+            if (item.isSimilar(eventPlayerDeath)) {
                 event.setCancelled(true);
             }
-            if (event.getCurrentItem() != null && event.getCurrentItem().isSimilar(eventPlayerKill)) {
+            if (item.isSimilar(eventPlayerKill)) {
                 event.setCancelled(true);
             }
-            if (event.getCurrentItem() != null && event.getCurrentItem().isSimilar(eventPlayerRespawn)) {
+            if (item.isSimilar(eventPlayerRespawn)) {
                 event.setCancelled(true);
             }
-            if (event.getCurrentItem() != null && event.getCurrentItem().isSimilar(eventFishCaught)) {
+            if (item.isSimilar(eventFishCaught)) {
                 event.setCancelled(true);
             }
-            if (event.getCurrentItem() != null && event.getCurrentItem().isSimilar(eventPlayerEnterPortal)) {
+            if (item.isSimilar(eventPlayerEnterPortal)) {
                 event.setCancelled(true);
             }
-            if (event.getCurrentItem() != null && event.getCurrentItem().isSimilar(eventPlayerDamage)) {
+            if (item.isSimilar(eventPlayerDamage)) {
                 event.setCancelled(true);
             }
-            if (event.getCurrentItem() != null && event.getCurrentItem().isSimilar(eventBlockBreak)) {
+            if (item.isSimilar(eventBlockBreak)) {
                 event.setCancelled(true);
+            }
+
+
+                // МЕНЮ ПОДТВЕРЖДЕНИЯ ДЕЙСТВИЯ
+            // Если подтвердил
+            if (item.isSimilar(applyActionYes)) {
+                event.setCancelled(true);
+                switch (applyAction) {
+                    case "ScoreBoardToDefault":
+                        applyAction = "";
+                        player.openInventory(scoreboardEditorMenu);
+                        scoreboardContent.clear();
+                        updateScoreboards();
+                        for (int i = 10; i < 45; i++) {
+                            scoreboardEditorMenu.clear(i);
+                        }
+                        break;
+                }
+            }
+            // Если отменил
+            if (item.isSimilar(applyActionNo)) {
+                event.setCancelled(true);
+                switch (applyAction) {
+                    case "ScoreBoardToDefault":
+                        applyAction = "";
+                        player.openInventory(scoreboardEditorMenu);
+                        break;
+                }
             }
         }
     }
@@ -315,8 +386,7 @@ public class SettingsCommand implements CommandExecutor, Listener {
         player.setScoreboard(scoreboard);
     }
 
-    private void updateScoreboard(Player player) {
-        player.sendMessage(scoreboardContent.toString());
+    private void updateScoreboards() {
         Scoreboard scoreboard = Bukkit.getScoreboardManager().getNewScoreboard();
         Objective objective = addPlayerLines(scoreboard.registerNewObjective("SCOREBOARD", "dummy"));
         objective.setDisplaySlot(DisplaySlot.SIDEBAR);
