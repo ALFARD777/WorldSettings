@@ -41,15 +41,12 @@ public class SettingsCommand implements CommandExecutor, Listener {
     int indexToChange = -1;
 
     // Стрелки возврата
-    private ItemStack backToScoreboardEditorMenuArrow = new ItemStack(Material.BARRIER);
-
-    // Все меню
-    private Inventory scoreboardEditorMenu;
+    private final ItemStack backToScoreboardEditorMenuArrow;
 
     // Главное меню
-    private ItemStack quitMenuItem = new ItemStack(Material.BARRIER);
-    private ItemStack scoreboardEditorItem = new ItemStack(Material.BARRIER);
-    private ItemStack eventEditorItem = new ItemStack(Material.BARRIER);
+    private final ItemStack quitMenuItem;
+    private final ItemStack scoreboardEditorItem;
+    private final ItemStack eventEditorItem;
 
     // Редактор Scoreboard
     private Scoreboard scoreboard;
@@ -61,12 +58,6 @@ public class SettingsCommand implements CommandExecutor, Listener {
     private ItemStack realmNameLineItem = new ItemStack(Material.BARRIER);
     private ItemStack guestsCountLineItem = new ItemStack(Material.BARRIER);
     private ItemStack currentGamemodeLineItem = new ItemStack(Material.BARRIER);
-    private final List<ChatColor> colorsList = new ArrayList<>(Arrays.asList(
-            BLACK, DARK_BLUE, DARK_GREEN,
-            DARK_AQUA, DARK_RED, DARK_PURPLE,
-            GOLD, DARK_GRAY, BLUE,
-            GREEN, AQUA, RED, LIGHT_PURPLE
-    ));
     private ItemStack textChangeOnCustomLine = new ItemStack(Material.BARRIER);
 
     // Редактор событий
@@ -89,11 +80,13 @@ public class SettingsCommand implements CommandExecutor, Listener {
 
     // КОНСТРУКТОР
     SettingsCommand() {
-        this.scoreboard = createNewScoreboard();
-        this.scoreboardEditorMenu = createScoreBoardEditorMenu();
         this.quitMenuItem = createItem(Material.DARK_OAK_DOOR, RED + "Выйти из меню настроек");
         this.scoreboardEditorItem = createItem(Material.FILLED_MAP, GREEN + "Редактировать Scoreboard", GRAY + "Редактирование текста в панели справа");
-        this.eventEditorItem = createItem(Material.COBWEB, GREEN + "Редактировать события", GRAY + "Редактирование действий при происходящем");
+        List<String> lore = new ArrayList<>();
+        lore.add(GRAY + "Редактирование действий при происходящем");
+        lore.add(" ");
+        lore.add(RED + "Доступно в ближайших обновлениях...");
+        this.eventEditorItem = createItem(Material.COBWEB, GREEN + "Редактировать события", lore);
         this.backToScoreboardEditorMenuArrow = createItem(Material.ARROW, YELLOW + "Назад", GRAY + "Вернуться в меню редактирования");
     }
 
@@ -132,17 +125,17 @@ public class SettingsCommand implements CommandExecutor, Listener {
             }
             // Открытие редактора ScoreBoard
             if (item.isSimilar(scoreboardEditorItem)) {
-                player.openInventory(scoreboardEditorMenu);
+                showScoreBoardEditorMenu(player);
             }
             // Открытие редактора событий
-            if (item.isSimilar(eventEditorItem)) {
-                showEventEditorMenu(player);
-            }
+//            if (item.isSimilar(eventEditorItem)) {
+//                showEventEditorMenu(player);
+//            }
 
             // РЕДАКТОР SCOREBOARD
             // Назад в редактор Scoreboard
             if (item.isSimilar(backToScoreboardEditorMenuArrow)) {
-                player.openInventory(scoreboardEditorMenu);
+                showScoreBoardEditorMenu(player);
             }
             // Возврат к стандартным для Scoreboard
             if (item.isSimilar(scoreBoardEditorToDefault)) {
@@ -172,75 +165,48 @@ public class SettingsCommand implements CommandExecutor, Listener {
             // Добавить пустую строку Scoreboard
             if (item.isSimilar(blankLineItem)) {
                 if (scoreboardContent.size() < 10) {
-                    List<String> lore = new ArrayList<>();
-                    lore.add(YELLOW + "Нажмите ПКМ для удаления");
-                    lore.add(GRAY + "Используйте SHIFT + ПКМ/ЛКМ для смены позиции");
-                    scoreboardEditorMenu.setItem(9 + scoreboardContent.size(), new ItemStackBuilder(createItem(Material.PAPER, GREEN + "Пустая строка", lore)).setUnbreakable(true).build());
-                    int clr = ThreadLocalRandom.current().nextInt(colorsList.size());
-                    scoreboardContent.add(colorsList.get(clr) + "" + WHITE + " ");
-                    colorsList.remove(clr);
+                    scoreboardContent.add("**blankLine**");
+                    MySqlDataBase.writeScoreboardTable(scoreboardContent, player.getWorld().getName(), player);
                     updateScoreboards(player);
-                    player.openInventory(scoreboardEditorMenu);
+                    showScoreBoardEditorMenu(player);
                     player.sendMessage(GREEN + "Пустая строка успешно добавлена!");
                 }
             }
             // Добавить кастомную строку Scoreboard
             if (item.isSimilar(customLineItem)) {
                 if (scoreboardContent.size() < 10) {
-                    List<String> lore = new ArrayList<>();
-                    lore.add(GRAY + "Изменение настроек строки");
-                    lore.add(YELLOW + "Нажмите ЛКМ для редактирования");
-                    lore.add(YELLOW + "Нажмите ПКМ для удаления");
-                    lore.add(GRAY + "Используйте SHIFT + ПКМ/ЛКМ для смены позиции");
-                    scoreboardEditorMenu.setItem(9 + scoreboardContent.size(), new ItemStackBuilder(createItem(Material.MAP, GREEN + "Произвольная строка", lore)).setUnbreakable(true).build());
-                    int clr = ThreadLocalRandom.current().nextInt(colorsList.size());
-                    scoreboardContent.add(colorsList.get(clr) + "" + RESET + "Привет, мир!");
-                    colorsList.remove(clr);
+                    scoreboardContent.add("Привет, мир!");
+                    MySqlDataBase.writeScoreboardTable(scoreboardContent, player.getWorld().getName(), player);
                     updateScoreboards(player);
-                    player.openInventory(scoreboardEditorMenu);
+                    showScoreBoardEditorMenu(player);
                     player.sendMessage(GREEN + "Произвольная строка успешно добавлена!");
                 }
             }
             // Добавить строку названия реалма в Scoreboard
             if (item.isSimilar(realmNameLineItem)) {
                 if (scoreboardContent.size() < 10) {
-                    List<String> lore = new ArrayList<>();
-                    lore.add(YELLOW + "Нажмите ПКМ для удаления");
-                    lore.add(GRAY + "Используйте SHIFT + ПКМ/ЛКМ для смены позиции");
-                    scoreboardEditorMenu.setItem(9 + scoreboardContent.size(), new ItemStackBuilder(createItem(Material.OAK_SIGN, GREEN + "Название сервера", lore)).setUnbreakable(true).build());
-                    int clr = ThreadLocalRandom.current().nextInt(colorsList.size());
-                    scoreboardContent.add(colorsList.get(clr) + "" + RESET + "%realmName%");
-                    colorsList.remove(clr);
+                    scoreboardContent.add("**realmName**");
+                    MySqlDataBase.writeScoreboardTable(scoreboardContent, player.getWorld().getName(), player);
                     updateScoreboards(player);
-                    player.openInventory(scoreboardEditorMenu);
+                    showScoreBoardEditorMenu(player);
                     player.sendMessage(GREEN + "Название сервера успешно добавлено!");
                 }
             }
             if (item.isSimilar(guestsCountLineItem)) {
                 if (scoreboardContent.size() < 10) {
-                    List<String> lore = new ArrayList<>();
-                    lore.add(YELLOW + "Нажмите ПКМ для удаления");
-                    lore.add(GRAY + "Используйте SHIFT + ПКМ/ЛКМ для смены позиции");
-                    scoreboardEditorMenu.setItem(9 + scoreboardContent.size(), new ItemStackBuilder(createItem(Material.PLAYER_HEAD, GREEN + "Количество игроков", lore)).setUnbreakable(true).build());
-                    int clr = ThreadLocalRandom.current().nextInt(colorsList.size());
-                    scoreboardContent.add(colorsList.get(clr) + "" + RESET + "%playersCount%");
-                    colorsList.remove(clr);
+                    scoreboardContent.add("**playersCount**");
+                    MySqlDataBase.writeScoreboardTable(scoreboardContent, player.getWorld().getName(), player);
                     updateScoreboards(player);
-                    player.openInventory(scoreboardEditorMenu);
+                    showScoreBoardEditorMenu(player);
                     player.sendMessage(GREEN + "Количество игроков успешно добавлено!");
                 }
             }
             if (item.isSimilar(currentGamemodeLineItem)) {
                 if (scoreboardContent.size() < 10) {
-                    List<String> lore = new ArrayList<>();
-                    lore.add(YELLOW + "Нажмите ПКМ для удаления");
-                    lore.add(GRAY + "Используйте SHIFT + ПКМ/ЛКМ для смены позиции");
-                    scoreboardEditorMenu.setItem(9 + scoreboardContent.size(), new ItemStackBuilder(createItem(Material.DIAMOND, GREEN + "Текущий игровой режим", lore)).setUnbreakable(true).build());
-                    int clr = ThreadLocalRandom.current().nextInt(colorsList.size());
-                    scoreboardContent.add(colorsList.get(clr) + "" + RESET + "%currentGamemode%");
-                    colorsList.remove(clr);
+                    scoreboardContent.add("**currentGamemode**");
+                    MySqlDataBase.writeScoreboardTable(scoreboardContent, player.getWorld().getName(), player);
                     updateScoreboards(player);
-                    player.openInventory(scoreboardEditorMenu);
+                    showScoreBoardEditorMenu(player);
                     player.sendMessage(GREEN + "Текущий игровой режим успешно добавлен!");
                 }
             }
@@ -263,6 +229,7 @@ public class SettingsCommand implements CommandExecutor, Listener {
                 player.updateInventory();
                 if (inventory.contains(scoreBoardEditorToDefault)) {
                     scoreboardContent.remove(event.getSlot() - 9);
+                    MySqlDataBase.writeScoreboardTable(scoreboardContent, player.getWorld().getName(), player);
                     updateScoreboards(player);
                 }
                 player.sendMessage(GREEN + "Компонент успешно удален!");
@@ -331,12 +298,10 @@ public class SettingsCommand implements CommandExecutor, Listener {
                 switch (currentAction) {
                     case "ScoreBoardToDefault":
                         currentAction = "";
-                        player.openInventory(scoreboardEditorMenu);
                         scoreboardContent.clear();
+                        MySqlDataBase.writeScoreboardTable(scoreboardContent, player.getWorld().getName(), player);
                         updateScoreboards(player);
-                        for (int i = 10; i < 45; i++) {
-                            scoreboardEditorMenu.clear(i);
-                        }
+                        showScoreBoardEditorMenu(player);
                         break;
                     case "Coming Soon...":
                         break;
@@ -347,7 +312,7 @@ public class SettingsCommand implements CommandExecutor, Listener {
                 switch (currentAction) {
                     case "ScoreBoardToDefault":
                         currentAction = "";
-                        player.openInventory(scoreboardEditorMenu);
+                        showScoreBoardEditorMenu(player);
                         break;
                     case "Coming Soon...":
                         break;
@@ -427,8 +392,7 @@ public class SettingsCommand implements CommandExecutor, Listener {
     // Подключение игрока
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
-        scoreboard = createNewScoreboard(event.getPlayer());
-        event.getPlayer().setScoreboard(scoreboard);
+        updateScoreboards(event.getPlayer());
 
         // ЧТОБЫ РАБОТАЛ, А НЕ КАМНИ СВОИ ЕБУЧИЕ СТАВИЛ
         Player player = event.getPlayer();
@@ -462,8 +426,8 @@ public class SettingsCommand implements CommandExecutor, Listener {
     }
 
     // Создание редактора Scoreboard
-    public Inventory createScoreBoardEditorMenu() {
-        scoreboardEditorMenu = Bukkit.getServer().createInventory(null, 54, "Настройки Scoreboard");
+    public void showScoreBoardEditorMenu(Player player) {
+        Inventory scoreboardEditorMenu = Bukkit.getServer().createInventory(null, 54, "Настройки Scoreboard");
         emptyGlass = createItem(Material.BLACK_STAINED_GLASS_PANE, WHITE + " ");
         for (int i = 0; i < 54; i++) {
             scoreboardEditorMenu.setItem(i, emptyGlass);
@@ -480,7 +444,42 @@ public class SettingsCommand implements CommandExecutor, Listener {
         bookLore.add(GRAY + "10 строк — это ограничение Minecraft");
         infoBook = createItem(Material.BOOK, YELLOW + "Настройки Scoreboard", bookLore);
         scoreboardEditorMenu.setItem(53, infoBook);
-        return scoreboardEditorMenu;
+        for (int i = 0; i < scoreboardContent.size(); i++) {
+            if (scoreboardContent.get(i).contains("**blankLine")) {
+                List<String> lore = new ArrayList<>();
+                lore.add(YELLOW + "Нажмите ПКМ для удаления");
+                lore.add(GRAY + "Используйте SHIFT + ПКМ/ЛКМ для смены позиции");
+                scoreboardEditorMenu.setItem(9 + i, new ItemStackBuilder(createItem(Material.PAPER, GREEN + "Пустая строка", lore)).setUnbreakable(true).build());
+            }
+            else if (scoreboardContent.get(i).contains("**realmName**")) {
+                List<String> lore = new ArrayList<>();
+                lore.add(YELLOW + "Нажмите ПКМ для удаления");
+                lore.add(GRAY + "Используйте SHIFT + ПКМ/ЛКМ для смены позиции");
+                scoreboardEditorMenu.setItem(9 + i, new ItemStackBuilder(createItem(Material.OAK_SIGN, GREEN + "Название сервера", lore)).setUnbreakable(true).build());
+            }
+            else if (scoreboardContent.get(i).contains("**playersCount**")) {
+                List<String> lore = new ArrayList<>();
+                lore.add(YELLOW + "Нажмите ПКМ для удаления");
+                lore.add(GRAY + "Используйте SHIFT + ПКМ/ЛКМ для смены позиции");
+                scoreboardEditorMenu.setItem(9 + i, new ItemStackBuilder(createItem(Material.PLAYER_HEAD, GREEN + "Количество игроков", lore)).setUnbreakable(true).build());
+            }
+            else if (scoreboardContent.get(i).contains("**currentGamemode**")) {
+                List<String> lore = new ArrayList<>();
+                lore.add(YELLOW + "Нажмите ПКМ для удаления");
+                lore.add(GRAY + "Используйте SHIFT + ПКМ/ЛКМ для смены позиции");
+                scoreboardEditorMenu.setItem(9 + scoreboardContent.size(), new ItemStackBuilder(createItem(Material.DIAMOND, GREEN + "Текущий игровой режим", lore)).setUnbreakable(true).build());
+            }
+            else {
+                List<String> lore = new ArrayList<>();
+                lore.add(GRAY + "Изменение настроек строки");
+                lore.add(YELLOW + "Нажмите ЛКМ для редактирования");
+                lore.add(YELLOW + "Нажмите ПКМ для удаления");
+                lore.add(GRAY + "Используйте SHIFT + ПКМ/ЛКМ для смены позиции");
+                scoreboardEditorMenu.setItem(9 + i, new ItemStackBuilder(createItem(Material.MAP, GREEN + "Произвольная строка", lore)).setUnbreakable(true).build());
+            }
+
+        }
+        player.openInventory(scoreboardEditorMenu);
     }
 
     // Отображение редактора событий
@@ -515,7 +514,7 @@ public class SettingsCommand implements CommandExecutor, Listener {
         bookLore.add(GRAY + "справа экрана панель, но только до");
         bookLore.add(GRAY + "10 строк — это ограничение Minecraft");
         infoBook = createItem(Material.BOOK, YELLOW + "Настройки Scoreboard", bookLore);
-        scoreboardEditorMenu.setItem(53, infoBook);
+        eventEditorMenu.setItem(53, infoBook);
         player.openInventory(eventEditorMenu);
     }
 
@@ -535,51 +534,49 @@ public class SettingsCommand implements CommandExecutor, Listener {
 
 
     // Создание нового Scoreboard
-    private Scoreboard createNewScoreboard(Player player) {
-        Scoreboard scoreboard = Bukkit.getScoreboardManager().getNewScoreboard();
-        Objective objective = null;
-        objective = addPlayerLines(scoreboard.registerNewObjective("SCOREBOARD", "dummy"), player);
+    private void createNewScoreboard(Player player) {
+        scoreboard = Bukkit.getScoreboardManager().getNewScoreboard();
+        Objective objective = addPlayerLines(scoreboard.registerNewObjective("SCOREBOARD", "dummy"), player);
         objective.setDisplaySlot(DisplaySlot.SIDEBAR);
         objective.setDisplayName(YELLOW + "" + BOLD + "REALM");
         objective.getScore(GRAY + new SimpleDateFormat("dd/MM/yy").format(new Date())).setScore(scoreboardContent.size() + 3);
         objective.getScore(WHITE + " ").setScore(scoreboardContent.size() + 2);
         objective.getScore(WHITE + "").setScore(1);
         objective.getScore(YELLOW + "easy-realm.ru").setScore(0);
-        return scoreboard;
-    }
-
-    private Scoreboard createNewScoreboard() {
-        Scoreboard scoreboard = Bukkit.getScoreboardManager().getNewScoreboard();
-        Objective objective = scoreboard.registerNewObjective("SCOREBOARD", "dummy");
-        objective.setDisplaySlot(DisplaySlot.SIDEBAR);
-        objective.setDisplayName(YELLOW + "" + BOLD + "REALM");
-        objective.getScore(GRAY + new SimpleDateFormat("dd/MM/yy").format(new Date())).setScore(scoreboardContent.size() + 3);
-        objective.getScore(WHITE + " ").setScore(scoreboardContent.size() + 2);
-        objective.getScore(WHITE + "").setScore(1);
-        objective.getScore(YELLOW + "easy-realm.ru").setScore(0);
-        return scoreboard;
     }
 
     // Обновление Scoreboard у всех пользователей
     private void updateScoreboards(Player player) {
-        player.setScoreboard(Bukkit.getScoreboardManager().getNewScoreboard());
+        createNewScoreboard(player);
         for (Player onlinePlayer : Bukkit.getOnlinePlayers()) {
-            onlinePlayer.setScoreboard(createNewScoreboard(player));
+            onlinePlayer.setScoreboard(scoreboard);
         }
     }
 
     // Добавление пользовательских строк в Scoreboard
     private Objective addPlayerLines(Objective objective, Player player) {
+        scoreboardContent = MySqlDataBase.getScoreboardContent(player);
         if (!scoreboardContent.isEmpty()) {
             int scoreValue = scoreboardContent.size() + 1;
+            List<ChatColor> colorsList = new ArrayList<>(Arrays.asList(
+                    BLACK, DARK_BLUE, DARK_GREEN,
+                    DARK_AQUA, DARK_RED, DARK_PURPLE,
+                    GOLD, DARK_GRAY, BLUE,
+                    GREEN, AQUA, RED, LIGHT_PURPLE
+            ));
             for (String content : scoreboardContent) {
-                if (content.contains("%playersCount%"))
-                    objective.getScore(WHITE + "Игроки: " + player.getServer().getOnlinePlayers().size()).setScore(scoreValue);
-                else if (content.contains("%realmName%"))
-                    objective.getScore(WHITE + "Название: " + MySqlDataBase.getWorldName(player)).setScore(scoreValue);
-                else if (content.contains("%currentGamemode%"))
-                    objective.getScore(WHITE + "Игровой режим: " + YELLOW + player.getGameMode()).setScore(scoreValue);
-                else objective.getScore(WHITE + content).setScore(scoreValue);
+                int clr = ThreadLocalRandom.current().nextInt(colorsList.size());
+                if (content.contains("**blankLine**"))
+                    objective.getScore(colorsList.get(clr) + "" + RESET + " ").setScore(scoreValue);
+                else if (content.contains("**playersCount**"))
+                    objective.getScore(colorsList.get(clr) + "" + RESET + "Игроки: " + player.getServer().getOnlinePlayers().size()).setScore(scoreValue);
+                else if (content.contains("**realmName**"))
+                    objective.getScore(colorsList.get(clr) + "" + RESET + "Название: " + MySqlDataBase.getWorldName(player)).setScore(scoreValue);
+                else if (content.contains("**currentGamemode**"))
+                    objective.getScore(colorsList.get(clr) + "" + RESET + "Игровой режим: " + YELLOW + player.getGameMode()).setScore(scoreValue);
+                else
+                    objective.getScore(colorsList.get(clr) + "" + RESET + formatColor(content)).setScore(scoreValue);
+                colorsList.remove(clr);
                 scoreValue--;
             }
         }
@@ -602,14 +599,15 @@ public class SettingsCommand implements CommandExecutor, Listener {
                 player.sendMessage(RED + "Вы отменили ввод");
             } else {
                 inputMap.put(player, message);
-                player.sendMessage(GREEN + "Новое значение: " + message);
+                player.sendMessage(GREEN + "Новое значение: " + formatColor(message));
                 player.sendMessage(RED + "" + BOLD + "Для обновления Scoreboard введите команду /reloadsb или перезайдите");
                 switch (currentAction) {
                     case "ScoreboardCustomLineChange":
-                        scoreboardContent.set(indexToChange, formatColor(message));
+                        scoreboardContent.set(indexToChange, message);
+                        MySqlDataBase.writeScoreboardTable(scoreboardContent, player.getWorld().getName(), player);
                         inputMap.remove(player);
                         updateScoreboards(player);
-                        player.openInventory(scoreboardEditorMenu);
+                        showScoreBoardEditorMenu(player);
                         break;
                     case "Coming Soon...":
                         break;

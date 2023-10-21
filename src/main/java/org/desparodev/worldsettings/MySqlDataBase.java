@@ -1,7 +1,9 @@
 package org.desparodev.worldsettings;
 
 import org.bukkit.entity.Player;
+
 import java.sql.*;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -31,11 +33,22 @@ public class MySqlDataBase {
             sqlString.append(content).append("%%");
         }
         try {
-            if (connection.prepareStatement("SELECT COUNT(*) FROM `scoreboards` WHERE `world_name` = '" + worldName + "'").executeQuery().getInt("COUNT(*)") != 0) {
-                connection.createStatement().executeUpdate("UPDATE `scoreboards` SET `scoreboards_content` = \"" + sqlString + "\" WHERE `world_name` = '" + getWorldName(player) + "'");
-            } else {
-                connection.createStatement().executeUpdate("INSERT INTO `scoreboards` (world_name, scoreboard_content) VALUES ('" + getWorldName(player) + "', '" + sqlString + "')");
+            ResultSet condition = connection.prepareStatement("SELECT COUNT(*) FROM `scoreboards` WHERE `world_name` = '" + worldName + "'").executeQuery();
+            if (condition.next()) {
+                if (condition.getInt("COUNT(*)") != 0) {
+                    connection.createStatement().executeUpdate("UPDATE `scoreboards` SET `scoreboard_content` = '" + sqlString + "' WHERE `world_name` = '" + getWorldName(player) + "'");
+                } else {
+                    connection.createStatement().executeUpdate("INSERT INTO `scoreboards` (world_name, scoreboard_content) VALUES ('" + getWorldName(player) + "', '" + sqlString + "')");
+                }
             }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static void deleteScoreboardTable(String worldName) {
+        try {
+            connection.createStatement().executeUpdate("DELETE FROM `scoreboards` WHERE world_name = '" + worldName + "'");
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
@@ -43,7 +56,11 @@ public class MySqlDataBase {
 
     public static String getWorldName(Player player) {
         try {
-            return connection.prepareStatement("SELECT `world_name` FROM `realm_worlds` WHERE `owner_name` = '" + player.getName() + "'").executeQuery().getString("owner_name");
+            ResultSet result = connection.prepareStatement("SELECT `world_name` FROM `realm_worlds` WHERE `owner_name` = '" + player.getName() + "'").executeQuery();
+            if (result.next()) {
+                return result.getString("world_name");
+            }
+            return null;
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
@@ -51,7 +68,11 @@ public class MySqlDataBase {
 
     public static String getWorldOwnerName(String worldName) {
         try {
-            return connection.prepareStatement("SELECT `owner_name` FROM `realm_worlds` WHERE `world_name` = '" + worldName + "'").executeQuery().getString("world_name");
+            ResultSet result = connection.prepareStatement("SELECT `owner_name` FROM `realm_worlds` WHERE `world_name` = '" + worldName + "'").executeQuery();
+            if (result.next()) {
+                return result.getString("owner_name");
+            }
+            return null;
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
@@ -59,7 +80,13 @@ public class MySqlDataBase {
 
     public static List<String> getScoreboardContent(Player player) {
         try {
-            return Arrays.asList(connection.prepareStatement("SELECT `scoreboard_content` FROM `scoreboards` WHERE `world_name` = '" + getWorldName(player) + "'").executeQuery().getString("scoreboard_content").split("%%"));
+            ResultSet result = connection.prepareStatement("SELECT `scoreboard_content` FROM `scoreboards` WHERE `world_name` = '" + getWorldName(player) + "'").executeQuery();
+            if (result.next()) {
+                if (result.getString("scoreboard_content").contains("%%")) {
+                    return new ArrayList<>(Arrays.asList(result.getString("scoreboard_content").split("%%")));
+                }
+            }
+            return new ArrayList<>();
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
