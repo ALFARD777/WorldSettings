@@ -393,16 +393,6 @@ public class SettingsCommand implements CommandExecutor, Listener {
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
         updateScoreboards(event.getPlayer());
-
-        // ЧТОБЫ РАБОТАЛ, А НЕ КАМНИ СВОИ ЕБУЧИЕ СТАВИЛ
-        Player player = event.getPlayer();
-        player.setInvulnerable(true); // Заморозить игрока
-        player.setAllowFlight(false); // Запретить полет
-        player.setHealth(20); // Установить полное здоровье
-        player.setFoodLevel(20); // Установить максимальный уровень голода
-        player.setWalkSpeed(0.0f); // Установить скорость ходьбы на 0.0, что предотвращает передвижение
-        player.setFlySpeed(0.0f); // Установить скорость полета на 0.0, что предотвращает полет
-        player.setJumping(false); // Отключить возможность прыжков
     }
 
     // Отключение игрока
