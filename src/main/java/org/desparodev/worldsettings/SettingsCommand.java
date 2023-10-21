@@ -7,7 +7,6 @@ import org.bukkit.Material;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
-import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -105,7 +104,8 @@ public class SettingsCommand implements CommandExecutor, Listener {
             if (command.getName().equals("settings")) {
                 showMainInventory((Player) sender);
             } else if (command.getName().equals("reloadSB")) {
-                performUpdateScoreboards((Player) sender);
+                updateScoreboards((Player) sender);
+                ((Player) sender).sendMessage(GREEN + "Scoreboard успешно обновлен!");
             }
         }
         return true;
@@ -144,7 +144,7 @@ public class SettingsCommand implements CommandExecutor, Listener {
             if (item.isSimilar(backToScoreboardEditorMenuArrow)) {
                 player.openInventory(scoreboardEditorMenu);
             }
-            // Возврат к стандартным
+            // Возврат к стандартным для Scoreboard
             if (item.isSimilar(scoreBoardEditorToDefault)) {
                 currentAction = "ScoreBoardToDefault";
                 showApplyActionMenu(player);
@@ -523,7 +523,7 @@ public class SettingsCommand implements CommandExecutor, Listener {
     public void showApplyActionMenu(Player player) {
         Inventory applyActionMenu = player.getServer().createInventory(null, 9, RED + "" + BOLD + "Вы уверены?");
         emptyGlass = createItem(Material.BLACK_STAINED_GLASS_PANE, WHITE + " ");
-        for (int i = 0; i < 54; i++) {
+        for (int i = 0; i < 9; i++) {
             applyActionMenu.setItem(i, emptyGlass);
         }
         applyActionYes = createItem(Material.GREEN_CONCRETE, GREEN + "ДА");
@@ -537,7 +537,8 @@ public class SettingsCommand implements CommandExecutor, Listener {
     // Создание нового Scoreboard
     private Scoreboard createNewScoreboard(Player player) {
         Scoreboard scoreboard = Bukkit.getScoreboardManager().getNewScoreboard();
-        Objective objective = addPlayerLines(scoreboard.registerNewObjective("SCOREBOARD", "dummy"), player);
+        Objective objective = null;
+        objective = addPlayerLines(scoreboard.registerNewObjective("SCOREBOARD", "dummy"), player);
         objective.setDisplaySlot(DisplaySlot.SIDEBAR);
         objective.setDisplayName(YELLOW + "" + BOLD + "REALM");
         objective.getScore(GRAY + new SimpleDateFormat("dd/MM/yy").format(new Date())).setScore(scoreboardContent.size() + 3);
@@ -561,10 +562,6 @@ public class SettingsCommand implements CommandExecutor, Listener {
 
     // Обновление Scoreboard у всех пользователей
     private void updateScoreboards(Player player) {
-        player.performCommand("reloadSB");
-    }
-
-    private void performUpdateScoreboards(Player player) {
         player.setScoreboard(Bukkit.getScoreboardManager().getNewScoreboard());
         for (Player onlinePlayer : Bukkit.getOnlinePlayers()) {
             onlinePlayer.setScoreboard(createNewScoreboard(player));
@@ -579,7 +576,7 @@ public class SettingsCommand implements CommandExecutor, Listener {
                 if (content.contains("%playersCount%"))
                     objective.getScore(WHITE + "Игроки: " + player.getServer().getOnlinePlayers().size()).setScore(scoreValue);
                 else if (content.contains("%realmName%"))
-                    objective.getScore(WHITE + "Название: ").setScore(scoreValue);
+                    objective.getScore(WHITE + "Название: " + MySqlDataBase.getWorldName(player)).setScore(scoreValue);
                 else if (content.contains("%currentGamemode%"))
                     objective.getScore(WHITE + "Игровой режим: " + YELLOW + player.getGameMode()).setScore(scoreValue);
                 else objective.getScore(WHITE + content).setScore(scoreValue);
@@ -609,7 +606,7 @@ public class SettingsCommand implements CommandExecutor, Listener {
                 player.sendMessage(RED + "" + BOLD + "Для обновления Scoreboard введите команду /reloadsb или перезайдите");
                 switch (currentAction) {
                     case "ScoreboardCustomLineChange":
-                        scoreboardContent.set(indexToChange, message);
+                        scoreboardContent.set(indexToChange, formatColor(message));
                         inputMap.remove(player);
                         updateScoreboards(player);
                         player.openInventory(scoreboardEditorMenu);
@@ -661,5 +658,10 @@ public class SettingsCommand implements CommandExecutor, Listener {
 
         itemStack.setItemMeta(itemMeta);
         return itemStack;
+    }
+
+    // ПРОЧЕЕ
+    public static String formatColor(String format){
+        return ChatColor.translateAlternateColorCodes('&', format);
     }
 }

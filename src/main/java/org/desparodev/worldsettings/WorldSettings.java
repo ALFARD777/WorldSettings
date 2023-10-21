@@ -8,12 +8,12 @@ import java.util.logging.Level;
 public final class WorldSettings extends JavaPlugin {
     @Override
     public void onEnable() {
-        File configFile = new File(getDataFolder(), "config.ini");
+        File configFile = new File(getDataFolder(), "config.yml");
         if (!configFile.exists()) {
             getConfig().options().copyDefaults(true);
             saveConfig();
         }
-        MySqlDataBase db = new MySqlDataBase(getConfig().getString("mysql.host"), getConfig().getInt("mysql.port"), getConfig().getString("mysql.database"), getConfig().getString("mysql.username"), getConfig().getString("mysql.password"));
+        MySqlDataBase db = new MySqlDataBase(getConfig().getString("mysql.jdbc"));
 
 
         SettingsCommand sc = new SettingsCommand();
