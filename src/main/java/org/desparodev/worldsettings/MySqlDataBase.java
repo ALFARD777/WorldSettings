@@ -58,7 +58,7 @@ public class MySqlDataBase {
         try {
             ResultSet result = connection.prepareStatement("SELECT `world_name` FROM `realm_worlds` WHERE `owner_name` = '" + player.getName() + "'").executeQuery();
             if (result.next()) {
-                return result.getString("world_name");
+                return result.getString("world_name").replaceAll("(_nether|_end)$", "");
             }
             return null;
         } catch (SQLException e) {

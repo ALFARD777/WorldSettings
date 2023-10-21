@@ -391,8 +391,9 @@ public class SettingsCommand implements CommandExecutor, Listener {
     // ВСЕ СОБЫТИЯ
     // Подключение игрока
     @EventHandler
-    public void onPlayerJoin(PlayerJoinEvent event) {
-        updateScoreboards(event.getPlayer());
+    public void onPlayerChangeWorld(PlayerJoinEvent event) {
+        if (!event.getPlayer().getWorld().getName().equals("hub"))
+            updateScoreboards(event.getPlayer());
     }
 
     // Отключение игрока
@@ -440,26 +441,22 @@ public class SettingsCommand implements CommandExecutor, Listener {
                 lore.add(YELLOW + "Нажмите ПКМ для удаления");
                 lore.add(GRAY + "Используйте SHIFT + ПКМ/ЛКМ для смены позиции");
                 scoreboardEditorMenu.setItem(9 + i, new ItemStackBuilder(createItem(Material.PAPER, GREEN + "Пустая строка", lore)).setUnbreakable(true).build());
-            }
-            else if (scoreboardContent.get(i).contains("**realmName**")) {
+            } else if (scoreboardContent.get(i).contains("**realmName**")) {
                 List<String> lore = new ArrayList<>();
                 lore.add(YELLOW + "Нажмите ПКМ для удаления");
                 lore.add(GRAY + "Используйте SHIFT + ПКМ/ЛКМ для смены позиции");
                 scoreboardEditorMenu.setItem(9 + i, new ItemStackBuilder(createItem(Material.OAK_SIGN, GREEN + "Название сервера", lore)).setUnbreakable(true).build());
-            }
-            else if (scoreboardContent.get(i).contains("**playersCount**")) {
+            } else if (scoreboardContent.get(i).contains("**playersCount**")) {
                 List<String> lore = new ArrayList<>();
                 lore.add(YELLOW + "Нажмите ПКМ для удаления");
                 lore.add(GRAY + "Используйте SHIFT + ПКМ/ЛКМ для смены позиции");
                 scoreboardEditorMenu.setItem(9 + i, new ItemStackBuilder(createItem(Material.PLAYER_HEAD, GREEN + "Количество игроков", lore)).setUnbreakable(true).build());
-            }
-            else if (scoreboardContent.get(i).contains("**currentGamemode**")) {
+            } else if (scoreboardContent.get(i).contains("**currentGamemode**")) {
                 List<String> lore = new ArrayList<>();
                 lore.add(YELLOW + "Нажмите ПКМ для удаления");
                 lore.add(GRAY + "Используйте SHIFT + ПКМ/ЛКМ для смены позиции");
                 scoreboardEditorMenu.setItem(9 + scoreboardContent.size(), new ItemStackBuilder(createItem(Material.DIAMOND, GREEN + "Текущий игровой режим", lore)).setUnbreakable(true).build());
-            }
-            else {
+            } else {
                 List<String> lore = new ArrayList<>();
                 lore.add(GRAY + "Изменение настроек строки");
                 lore.add(YELLOW + "Нажмите ЛКМ для редактирования");
@@ -538,8 +535,10 @@ public class SettingsCommand implements CommandExecutor, Listener {
     // Обновление Scoreboard у всех пользователей
     private void updateScoreboards(Player player) {
         createNewScoreboard(player);
-        for (Player onlinePlayer : Bukkit.getOnlinePlayers()) {
-            onlinePlayer.setScoreboard(scoreboard);
+        if (!scoreboardContent.isEmpty()) {
+            for (Player onlinePlayer : Bukkit.getOnlinePlayers()) {
+                onlinePlayer.setScoreboard(scoreboard);
+            }
         }
     }
 
@@ -649,7 +648,7 @@ public class SettingsCommand implements CommandExecutor, Listener {
     }
 
     // ПРОЧЕЕ
-    public static String formatColor(String format){
+    public static String formatColor(String format) {
         return ChatColor.translateAlternateColorCodes('&', format);
     }
 }
