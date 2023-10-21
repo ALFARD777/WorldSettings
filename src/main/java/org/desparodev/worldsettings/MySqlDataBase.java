@@ -43,7 +43,7 @@ public class MySqlDataBase {
 
     public static String getWorldName(Player player) {
         try {
-            return connection.prepareStatement("SELECT `world_name` FROM `realm_worlds` WHERE `owner_name` = '" + player.getName()).executeQuery().getString("owner_name" + "'");
+            return connection.prepareStatement("SELECT `world_name` FROM `realm_worlds` WHERE `owner_name` = '" + player.getName() + "'").executeQuery().getString("owner_name");
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
@@ -51,7 +51,7 @@ public class MySqlDataBase {
 
     public static String getWorldOwnerName(String worldName) {
         try {
-            return connection.prepareStatement("SELECT `owner_name` FROM `realm_worlds` WHERE `world_name` = '" + worldName).executeQuery().getString("world_name" + "'");
+            return connection.prepareStatement("SELECT `owner_name` FROM `realm_worlds` WHERE `world_name` = '" + worldName + "'").executeQuery().getString("world_name");
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
