@@ -108,7 +108,7 @@ public class SettingsCommand implements CommandExecutor, Listener {
     @EventHandler
     public void onInventoryClick(InventoryClickEvent event) {
         if (event.getClickedInventory() != null && event.getCurrentItem() != null) {
-            event.setCancelled(true);
+            if (event.getClickedInventory().contains(emptyGlass)) event.setCancelled(true);
             Player player = (Player) event.getWhoClicked();
             ItemStack item = event.getCurrentItem();
 
