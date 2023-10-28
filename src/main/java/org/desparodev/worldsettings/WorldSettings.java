@@ -8,6 +8,7 @@ import java.util.logging.Level;
 public final class WorldSettings extends JavaPlugin {
     @Override
     public void onEnable() {
+        WorldSettingsProvider.setPlugin(this);
         File configFile = new File(getDataFolder(), "config.yml");
         if (!configFile.exists()) {
             getConfig().options().copyDefaults(true);

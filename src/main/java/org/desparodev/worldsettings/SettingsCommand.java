@@ -46,6 +46,7 @@ public class SettingsCommand implements CommandExecutor, Listener {
     // Главное меню
     private final ItemStack quitMenuItem;
     private final ItemStack scoreboardEditorItem;
+    private final ItemStack adminToolsItem;
     private final ItemStack eventEditorItem;
 
     // Редактор Scoreboard
@@ -81,6 +82,7 @@ public class SettingsCommand implements CommandExecutor, Listener {
     // КОНСТРУКТОР
     SettingsCommand() {
         this.quitMenuItem = createItem(Material.DARK_OAK_DOOR, RED + "Выйти из меню настроек");
+        this.adminToolsItem = createItem(Material.DIAMOND_SHOVEL, GREEN + "Инструменты администратора", GRAY + "Персональные настройки");
         this.scoreboardEditorItem = createItem(Material.FILLED_MAP, GREEN + "Редактировать Scoreboard", GRAY + "Редактирование текста в панели справа");
         List<String> lore = new ArrayList<>();
         lore.add(GRAY + "Редактирование действий при происходящем");
@@ -94,11 +96,12 @@ public class SettingsCommand implements CommandExecutor, Listener {
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, String[] args) {
         if (sender instanceof Player) {
-            if (command.getName().equals("settings")) {
-                showMainInventory((Player) sender);
+            Player player = (Player) sender;
+            if (command.getName().equals("settings") && player.hasPermission("worldsettings.usesettings")) {
+                showMainInventory(player);
             } else if (command.getName().equals("reloadSB")) {
-                updateScoreboards((Player) sender);
-                ((Player) sender).sendMessage(GREEN + "Scoreboard успешно обновлен!");
+                updateScoreboards(player);
+                player.sendMessage(GREEN + "Scoreboard успешно обновлен!");
             }
         }
         return true;
@@ -123,14 +126,24 @@ public class SettingsCommand implements CommandExecutor, Listener {
             if (item.isSimilar(quitMenuItem)) {
                 player.closeInventory(InventoryCloseEvent.Reason.PLAYER);
             }
+            // Открытие инструментов администратора
+            if (item.isSimilar(adminToolsItem)) {
+                showAdminToolsMenu(player);
+            }
             // Открытие редактора ScoreBoard
             if (item.isSimilar(scoreboardEditorItem)) {
                 showScoreBoardEditorMenu(player);
             }
+
             // Открытие редактора событий
 //            if (item.isSimilar(eventEditorItem)) {
 //                showEventEditorMenu(player);
 //            }
+
+            // ИНСТРУМЕНТЫ АДМИНИСТРАТОРА
+            if (item.isSimilar(WorldSettingsItems.getItem("speed-boost"))) {
+                Players.enableElement(player.getName(), "speed-boost:1");
+            }
 
             // РЕДАКТОР SCOREBOARD
             // Назад в редактор Scoreboard
@@ -411,9 +424,28 @@ public class SettingsCommand implements CommandExecutor, Listener {
             settingsMenu.setItem(i, emptyGlass);
         }
         settingsMenu.setItem(49, quitMenuItem);
-        settingsMenu.setItem(10, scoreboardEditorItem);
-        settingsMenu.setItem(11, eventEditorItem);
+        settingsMenu.setItem(10, adminToolsItem);
+        settingsMenu.setItem(11, scoreboardEditorItem);
+        settingsMenu.setItem(12, eventEditorItem);
         player.openInventory(settingsMenu);
+    }
+
+    public void showAdminToolsMenu(Player player) {
+        Inventory adminToolsMenu = Bukkit.getServer().createInventory(null, 54, "Инструменты администратора");
+        emptyGlass = createItem(Material.BLACK_STAINED_GLASS_PANE, WHITE + " ");
+        for (int i = 0; i < 54; i++) {
+            adminToolsMenu.setItem(i, emptyGlass);
+        }
+        backToMainMenuArrow = createItem(Material.ARROW, YELLOW + "Назад", GRAY + "Вернуться в главное меню");
+        adminToolsMenu.setItem(49, backToMainMenuArrow);
+        adminToolsMenu.setItem(1, WorldSettingsItems.getItem("speed-boost"));
+        adminToolsMenu.setItem(3, WorldSettingsItems.getItem("jump-boost"));
+        adminToolsMenu.setItem(5, WorldSettingsItems.getItem("fly"));
+        adminToolsMenu.setItem(7, WorldSettingsItems.getItem("stacker"));
+        adminToolsMenu.setItem(29, WorldSettingsItems.getItem("vanish"));
+        adminToolsMenu.setItem(31, WorldSettingsItems.getItem("chat"));
+        adminToolsMenu.setItem(33, WorldSettingsItems.getItem("visibility"));
+        player.openInventory(adminToolsMenu);
     }
 
     // Создание редактора Scoreboard
@@ -564,7 +596,7 @@ public class SettingsCommand implements CommandExecutor, Listener {
                 else if (content.contains("**currentGamemode**"))
                     objective.getScore(colorsList.get(clr) + "" + RESET + "Игровой режим: " + YELLOW + player.getGameMode()).setScore(scoreValue);
                 else
-                    objective.getScore(colorsList.get(clr) + "" + RESET + formatColor(content)).setScore(scoreValue);
+                    objective.getScore(colorsList.get(clr) + "" + RESET + ChatColorUtils.formatColor(content)).setScore(scoreValue);
                 colorsList.remove(clr);
                 scoreValue--;
             }
@@ -588,7 +620,7 @@ public class SettingsCommand implements CommandExecutor, Listener {
                 player.sendMessage(RED + "Вы отменили ввод");
             } else {
                 inputMap.put(player, message);
-                player.sendMessage(GREEN + "Новое значение: " + formatColor(message));
+                player.sendMessage(GREEN + "Новое значение: " + ChatColorUtils.formatColor(message));
                 player.sendMessage(RED + "" + BOLD + "Для обновления Scoreboard введите команду /reloadsb или перезайдите");
                 switch (currentAction) {
                     case "ScoreboardCustomLineChange":
@@ -645,10 +677,5 @@ public class SettingsCommand implements CommandExecutor, Listener {
 
         itemStack.setItemMeta(itemMeta);
         return itemStack;
-    }
-
-    // ПРОЧЕЕ
-    public static String formatColor(String format) {
-        return ChatColor.translateAlternateColorCodes('&', format);
     }
 }
