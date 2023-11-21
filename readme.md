@@ -1,1 +1,1 @@
-<h5>Not finished minecraft plugin yet</h5>
+<h2>Not finished minecraft plugin yet...</h2>
